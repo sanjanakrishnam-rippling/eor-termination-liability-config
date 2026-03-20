@@ -20,7 +20,7 @@ function AppContent() {
     <div className="min-h-screen flex flex-col">
       <DevToolbar />
       <AppHeader />
-      <main className="flex-1">
+      <main className="flex-1 flex flex-col">
         <Routes>
           <Route path="/apply" element={<UnderwritingFormView />} />
           <Route path="/apply/confirmation" element={<SubmissionConfirmationView />} />

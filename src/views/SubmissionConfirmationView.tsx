@@ -98,7 +98,7 @@ export default function SubmissionConfirmationView() {
   const config = STATUS_CONFIGS[status];
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-6">
+    <div className="bg-white flex justify-center px-6 pt-[2em]">
       <div className="max-w-[520px] w-full bg-white border border-[#e5e7eb] rounded-xl shadow-sm p-10 flex flex-col items-center gap-6">
         {/* Icon */}
         <div className={`w-16 h-16 rounded-full ${config.iconBg} flex items-center justify-center`}>
