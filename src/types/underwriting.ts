@@ -97,7 +97,7 @@ export function createEmptyFormData(): UnderwritingFormData {
     },
     avgMonthlyPayroll: '',
     submissionRequestType: '',
-    countryRequests: [],
+    countryRequests: [createEmptyCountryRequest('default-1')],
     financialDetails: {
       bankStatements: [],
       otherFinancialDocs: [],

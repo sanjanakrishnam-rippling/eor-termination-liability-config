@@ -98,33 +98,33 @@ export default function SubmissionConfirmationView() {
   const config = STATUS_CONFIGS[status];
 
   return (
-    <div className="min-h-screen bg-[#fafafa] flex items-center justify-center px-6">
-      <div className="max-w-[520px] w-full bg-white border border-[#e3e3e3] rounded-xl shadow-sm p-10 flex flex-col items-center gap-6">
+    <div className="min-h-screen bg-white flex items-center justify-center px-6">
+      <div className="max-w-[520px] w-full bg-white border border-[#e5e7eb] rounded-xl shadow-sm p-10 flex flex-col items-center gap-6">
         {/* Icon */}
         <div className={`w-16 h-16 rounded-full ${config.iconBg} flex items-center justify-center`}>
           {config.icon}
         </div>
 
-        <h1 className="text-[24px] font-bold leading-[32px] text-[#252528] text-center tracking-[0.15px]">
+        <h1 className="text-[24px] font-bold leading-[32px] text-[#1a1a1a] text-center tracking-[-0.2px]">
           {config.title}
         </h1>
 
         <div className="w-full bg-[#f8f8f8] rounded-lg px-5 py-4 flex flex-col gap-3">
           <div className="flex justify-between items-center">
-            <span className="text-[14px] text-[#595555]">Status</span>
+            <span className="text-[14px] text-[#6b7280]">Status</span>
             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${config.badgeBg} ${config.badgeText} text-[13px] font-medium`}>
               <span className={`w-1.5 h-1.5 rounded-full ${config.dotColor}`} />
               {config.badgeLabel}
             </span>
           </div>
-          <div className="h-px bg-[#e3e3e3]" />
+          <div className="h-px bg-[#e5e7eb]" />
           <div className="flex justify-between items-center">
-            <span className="text-[14px] text-[#595555]">Case ID</span>
-            <span className="text-[14px] font-mono text-[#252528]">{caseId}</span>
+            <span className="text-[14px] text-[#6b7280]">Case ID</span>
+            <span className="text-[14px] font-mono text-[#1a1a1a]">{caseId}</span>
           </div>
         </div>
 
-        <p className="text-[14px] leading-[20px] text-[#8f8f8f] text-center">
+        <p className="text-[14px] leading-[20px] text-[#6b7280] text-center">
           {config.message}
         </p>
       </div>

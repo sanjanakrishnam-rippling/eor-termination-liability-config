@@ -65,7 +65,7 @@ export default function RadioButton({
     } else if (isFocused) {
       return `${baseClasses} bg-white border-[#4a6ba6] border-opacity-50 shadow-sm ${sizeClasses.container} ${className}`;
     } else {
-      return `${baseClasses} bg-white border-[#bfbebe] hover:border-[#4a6ba6] hover:border-opacity-30 ${sizeClasses.container} ${className}`;
+      return `${baseClasses} bg-white border-[#d5d5d5] hover:border-[#4a6ba6] hover:border-opacity-30 ${sizeClasses.container} ${className}`;
     }
   };
 
@@ -74,7 +74,7 @@ export default function RadioButton({
       return `w-6 h-6 rounded-full border-2 border-[#4a6ba6] bg-[#4a6ba6] flex items-center justify-center`;
     } else {
       return `w-6 h-6 rounded-full border-2 transition-all duration-200 ${
-        isFocused ? 'border-[#4a6ba6] border-opacity-50' : 'border-[#bfbebe]'
+        isFocused ? 'border-[#4a6ba6] border-opacity-50' : 'border-[#d5d5d5]'
       }`;
     }
   };

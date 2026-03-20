@@ -88,19 +88,19 @@ export default function UnderwritingFormView() {
   const isOtherFinancialRequired = payrollNum > 500000;
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
+    <div className="min-h-screen bg-white">
       <div className="max-w-[720px] mx-auto px-6 py-10">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-[28px] font-bold leading-[36px] text-[#252528] tracking-[0.15px]">
+        <div className="mb-10">
+          <h1 className="text-[26px] font-bold leading-[34px] text-[#1a1a1a] tracking-[-0.2px]">
             EOR Underwriting Application
           </h1>
-          <p className="mt-2 text-[15px] leading-[22px] text-[#595555]">
+          <p className="mt-3 text-[16px] leading-[24px] text-[#6b7280]">
             Enter your info and verify your email to start your underwriting application.
             If you have already filled out this form, you can{' '}
             <a
               href="/apply/continue"
-              className="font-semibold text-[#1e4aa9] underline decoration-[#1e4aa9] hover:text-[#153a7a] transition-colors"
+              className="font-semibold text-[#1e4aa9] no-underline hover:text-[#152d4a] transition-colors"
             >
               continue with your application
             </a>
@@ -241,7 +241,7 @@ export default function UnderwritingFormView() {
             {/* Per-country requests */}
             <div id="field-countryRequests" className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <p className="font-medium text-[15px] text-[#252528] tracking-[0.25px]">
+                <p className="font-semibold text-[14px] text-[#1a1a1a] tracking-[0.1px]">
                   Countries
                 </p>
                 <Button
@@ -378,9 +378,9 @@ function CountryRequestCard({
     : availableCountries;
 
   return (
-    <div className="border border-[#e3e3e3] rounded-lg bg-white p-5 flex flex-col gap-4">
+    <div className="border border-[#e5e7eb] rounded-lg bg-white p-5 flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <p className="font-semibold text-[15px] text-[#252528]">Country {index + 1}</p>
+        <p className="font-semibold text-[14px] text-[#1a1a1a]">Country {index + 1}</p>
         <button
           type="button"
           onClick={onRemove}
@@ -403,7 +403,7 @@ function CountryRequestCard({
 
       {/* Employee Information */}
       <div className="flex flex-col gap-3">
-        <p className="font-medium text-[14px] text-[#595555] tracking-[0.25px]">
+        <p className="font-semibold text-[13px] text-[#6b7280] tracking-[0.1px]">
           Employee Information
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -434,7 +434,7 @@ function CountryRequestCard({
 
       {/* Contractor Information */}
       <div className="flex flex-col gap-3">
-        <p className="font-medium text-[14px] text-[#595555] tracking-[0.25px]">
+        <p className="font-semibold text-[13px] text-[#6b7280] tracking-[0.1px]">
           Contractor Information
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

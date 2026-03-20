@@ -16,16 +16,16 @@ export default function ProgressBar({
   return (
     <div className={`flex flex-col gap-2 w-full ${className}`}>
       <div className="flex items-center justify-between">
-        <p className="text-[13px] font-medium text-[#595555] tracking-[0.25px]">
+        <p className="text-[13px] font-medium text-[#1a1a1a] tracking-[0.1px]">
           Progress
         </p>
-        <p className="text-[13px] text-[#8f8f8f] tracking-[0.25px]">
+        <p className="text-[13px] text-[#6b7280] tracking-[0.1px]">
           {completedSections} of {totalSections} sections complete
         </p>
       </div>
-      <div className="w-full h-2 bg-[#e3e3e3] rounded-full overflow-hidden">
+      <div className="w-full h-2 bg-[#e5e7eb] rounded-full overflow-hidden">
         <div
-          className="h-full bg-[#502d3c] rounded-full transition-all duration-500 ease-out"
+          className="h-full bg-[#1a1a1a] rounded-full transition-all duration-500 ease-out"
           style={{ width: `${percentage}%` }}
         />
       </div>

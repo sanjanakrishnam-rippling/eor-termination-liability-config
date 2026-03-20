@@ -107,7 +107,7 @@ export default function DatePicker({
     if (disabled) return 'border-[#e0dede] bg-[#fafafa]';
     if (error) return 'border-[#c3402c]';
     if (isOpen) return 'border-[#4a6ba6]';
-    return 'border-[#bfbebe]';
+    return 'border-[#d5d5d5]';
   };
 
   const handleInputChange = (text: string) => {
@@ -150,7 +150,7 @@ export default function DatePicker({
   return (
     <div className={`flex flex-col gap-1 items-start relative rounded-lg shrink-0 w-full ${className}`} ref={containerRef}>
       <div className="flex gap-1 items-center relative shrink-0">
-        <p className="font-medium leading-[22px] relative shrink-0 text-[#595555] text-[15px] tracking-[0.25px]">
+        <p className="font-semibold leading-[22px] relative shrink-0 text-[#1a1a1a] text-[14px] tracking-[0.1px]">
           {label}
         </p>
         {required && (
@@ -197,7 +197,7 @@ export default function DatePicker({
               const isSelected = selectedDate ? isSameDay(date, selectedDate) : false;
               const base = 'h-8 flex items-center justify-center rounded cursor-pointer';
               const todayCls = isToday ? ' ring-1 ring-[#e0dede] text-[#595555]' : '';
-              const selectedCls = isSelected ? ' bg-[#502d3c] text-white' : ' hover:bg-[#f5f5f5]';
+              const selectedCls = isSelected ? ' bg-[#1a1a1a] text-white' : ' hover:bg-[#f5f5f5]';
               return (
                 <div
                   key={idx}

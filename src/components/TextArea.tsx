@@ -35,13 +35,13 @@ export default function TextArea({
     if (error) return 'border-[#c3402c]';
     if (isFocused) return 'border-[#4a6ba6]';
     if (isHovered) return 'border-[#4a6ba6] border-opacity-30';
-    return 'border-[#bfbebe]';
+    return 'border-[#d5d5d5]';
   };
 
   return (
     <div className={`flex flex-col gap-1 items-start w-full ${className}`}>
       <div className="flex gap-1 items-center">
-        <p className="font-medium leading-[22px] text-[#595555] text-[15px] tracking-[0.25px]">
+        <p className="font-semibold leading-[22px] text-[#1a1a1a] text-[14px] tracking-[0.1px]">
           {label}
         </p>
         {required && (

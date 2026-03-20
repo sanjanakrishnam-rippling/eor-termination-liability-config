@@ -14,11 +14,11 @@ export default function FormSection({
   return (
     <section className={`flex flex-col gap-5 w-full ${className}`}>
       <div className="flex flex-col gap-1">
-        <h2 className="text-[18px] font-semibold leading-[26px] text-[#252528] tracking-[0.15px]">
+        <h2 className="text-[18px] font-bold leading-[26px] text-[#1a1a1a] tracking-[0.1px]">
           {title}
         </h2>
         {description && (
-          <p className="text-[14px] leading-[20px] text-[#8f8f8f] tracking-[0.25px]">
+          <p className="text-[14px] leading-[20px] text-[#6b7280] tracking-[0.1px]">
             {description}
           </p>
         )}

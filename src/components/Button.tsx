@@ -61,43 +61,43 @@ export default function Button({
 
     if (isPressed && appearance === 'primary') {
       return {
-        container: 'bg-[#502d3c] cursor-pointer',
-        text: 'text-white'
+        container: 'bg-[#d5d5d5] cursor-pointer',
+        text: 'text-[#1a1a1a]'
       };
     }
 
     if (isHovered && appearance === 'primary') {
       return {
-        container: 'bg-[#502d3c] cursor-pointer',
-        text: 'text-white'
+        container: 'bg-[#e0e0e0] cursor-pointer',
+        text: 'text-[#1a1a1a]'
       };
     }
 
     switch (appearance) {
       case 'primary':
         return {
-          container: 'bg-[#502d3c] cursor-pointer hover:bg-[#502d3c]/90 active:bg-[#502d3c]',
-          text: 'text-white'
+          container: 'bg-[#ebebeb] cursor-pointer hover:bg-[#e0e0e0] active:bg-[#d5d5d5]',
+          text: 'text-[#1a1a1a]'
         };
       case 'secondary':
         return {
-          container: 'bg-white border border-[#d3d3d3] cursor-pointer hover:border-[#4a6ba6]',
-          text: 'text-[#252528]'
+          container: 'bg-white border border-[#d5d5d5] cursor-pointer hover:border-[#4a6ba6]',
+          text: 'text-[#1a1a1a]'
         };
       case 'outline':
         return {
-          container: 'bg-white border border-[#bfbebe] cursor-pointer hover:border-[#4a6ba6]',
-          text: 'text-black'
+          container: 'bg-white border border-[#d5d5d5] cursor-pointer hover:border-[#4a6ba6]',
+          text: 'text-[#1a1a1a]'
         };
       case 'ghost':
         return {
           container: 'bg-transparent cursor-pointer hover:bg-[rgba(0,0,0,0.05)]',
-          text: 'text-black'
+          text: 'text-[#1a1a1a]'
         };
       default:
         return {
-          container: 'bg-[#502d3c] cursor-pointer',
-          text: 'text-white'
+          container: 'bg-[#ebebeb] cursor-pointer',
+          text: 'text-[#1a1a1a]'
         };
     }
   };
@@ -135,17 +135,7 @@ export default function Button({
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       className={`box-border flex gap-2 items-center justify-center overflow-clip ${sizeClasses.container} relative rounded-lg shrink-0 transition-all duration-200 ${appearanceClasses.container} ${className}`}
-      style={
-        !disabled && isHovered && appearance === 'primary'
-          ? {
-              backgroundImage: 'linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.1) 100%), linear-gradient(90deg, rgba(80, 45, 60, 1) 0%, rgba(80, 45, 60, 1) 100%)'
-            }
-          : !disabled && isPressed && appearance === 'primary'
-          ? {
-              backgroundImage: 'linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.2) 100%), linear-gradient(90deg, rgba(80, 45, 60, 1) 0%, rgba(80, 45, 60, 1) 100%)'
-            }
-          : undefined
-      }
+      style={undefined}
     >
       <p className={`font-medium leading-[19px] relative shrink-0 ${sizeClasses.text} ${appearanceClasses.text} text-center tracking-[0.25px]`}>
         {children}

@@ -5,25 +5,12 @@ import DevToolbar from './components/DevToolbar';
 
 function AppHeader() {
   return (
-    <header className="sticky top-0 z-50 bg-[#502d3c] flex items-center px-6 h-[56px] w-full">
-      <div className="flex items-center gap-3">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          className="w-7 h-7"
-        >
-          <circle cx="12" cy="12" r="10" fill="white" fillOpacity="0.2" />
-          <path
-            d="M8 12h8M12 8v8"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </svg>
-        <span className="text-white font-semibold text-[16px] tracking-[0.15px]">
-          Rippling
-        </span>
-      </div>
+    <header className="w-full bg-white pt-8 pb-4 px-8">
+      <img
+        src="https://static-assets.ripplingcdn.com/webapp-static/rippling_logo.svg"
+        alt="Rippling"
+        className="h-[22px] w-auto"
+      />
     </header>
   );
 }

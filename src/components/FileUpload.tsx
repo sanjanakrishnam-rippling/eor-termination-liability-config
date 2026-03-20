@@ -60,13 +60,13 @@ export default function FileUpload({
     ? 'border-[#c3402c]'
     : isDragOver
       ? 'border-[#4a6ba6] bg-[#f0f4ff]'
-      : 'border-[#bfbebe]';
+      : 'border-[#d5d5d5]';
 
   return (
     <div className={`flex flex-col gap-1 items-start w-full ${className}`}>
       {/* Label */}
       <div className="flex gap-1 items-center">
-        <p className="font-medium leading-[22px] text-[#595555] text-[15px] tracking-[0.25px]">
+        <p className="font-semibold leading-[22px] text-[#1a1a1a] text-[14px] tracking-[0.1px]">
           {label}
         </p>
         {required && (
