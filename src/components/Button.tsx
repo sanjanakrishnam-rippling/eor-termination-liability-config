@@ -61,23 +61,23 @@ export default function Button({
 
     if (isPressed && appearance === 'primary') {
       return {
-        container: 'bg-[#d5d5d5] cursor-pointer',
-        text: 'text-[#1a1a1a]'
+        container: 'bg-[#5c0046] cursor-pointer',
+        text: 'text-white'
       };
     }
 
     if (isHovered && appearance === 'primary') {
       return {
-        container: 'bg-[#e0e0e0] cursor-pointer',
-        text: 'text-[#1a1a1a]'
+        container: 'bg-[#65004d] cursor-pointer',
+        text: 'text-white'
       };
     }
 
     switch (appearance) {
       case 'primary':
         return {
-          container: 'bg-[#ebebeb] cursor-pointer hover:bg-[#e0e0e0] active:bg-[#d5d5d5]',
-          text: 'text-[#1a1a1a]'
+          container: 'bg-[#7A005D] cursor-pointer hover:bg-[#65004d] active:bg-[#5c0046]',
+          text: 'text-white'
         };
       case 'secondary':
         return {

@@ -6,12 +6,17 @@ interface NavLink {
   path: string;
 }
 
+const FLOW_LINKS: NavLink[] = [
+  { label: 'Step 1 - Start', path: '/apply' },
+  { label: 'Step 2 - Filling Form', path: '/apply/form' },
+];
+
 const OUTCOME_LINKS: NavLink[] = [
-  { label: 'Pending', path: '/apply/confirmation?status=pending&caseId=CASE-001-TEST' },
-  { label: 'Approved', path: '/apply/confirmation?status=approved&caseId=CASE-002-TEST' },
-  { label: 'Declined', path: '/apply/confirmation?status=declined&caseId=CASE-003-TEST' },
-  { label: 'More Info Needed', path: '/apply/confirmation?status=more_info&caseId=CASE-004-TEST' },
-  { label: 'Manual Review', path: '/apply/confirmation?status=manual_review&caseId=CASE-005-TEST' },
+  { label: 'Pending', path: '/apply/confirmation?status=pending' },
+  { label: 'Approved', path: '/apply/confirmation?status=approved' },
+  { label: 'Declined', path: '/apply/confirmation?status=declined' },
+  { label: 'More Info Needed', path: '/apply/confirmation?status=more_info' },
+  { label: 'Manual Review', path: '/apply/confirmation?status=manual_review' },
 ];
 
 export default function DevToolbar() {
@@ -50,6 +55,18 @@ export default function DevToolbar() {
 
       {isExpanded && (
         <div className="flex flex-wrap items-center gap-x-1 gap-y-1 px-3 pb-2">
+          <span className="text-[11px] font-semibold text-[#1e4aa9]/70 uppercase tracking-wider mr-1">
+            Flow
+          </span>
+          {FLOW_LINKS.map((link) => (
+            <ToolbarButton
+              key={link.path}
+              label={link.label}
+              onClick={() => navigate(link.path)}
+              isActive={currentPath === link.path}
+            />
+          ))}
+          <span className="text-[11px] text-[#1e4aa9]/30 mx-1">|</span>
           <span className="text-[11px] font-semibold text-[#1e4aa9]/70 uppercase tracking-wider mr-1">
             Outcomes
           </span>

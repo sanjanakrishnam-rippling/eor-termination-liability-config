@@ -16,6 +16,7 @@ export interface InputTextProps {
   type?: 'text' | 'email' | 'password' | 'tel' | 'url';
   className?: string;
   size?: 'xs' | 's' | 'm' | 'l';
+  prefix?: string;
 }
 
 export default function InputText({
@@ -33,7 +34,8 @@ export default function InputText({
   disabled = false,
   type = 'text',
   className = '',
-  size = 'm'
+  size = 'm',
+  prefix,
 }: InputTextProps) {
   const [internalValue, setInternalValue] = useState(defaultValue);
   const [isFocused, setIsFocused] = useState(false);
@@ -124,10 +126,15 @@ export default function InputText({
 
       {/* Input Container */}
       <div
-        className={`bg-white border border-solid box-border flex gap-1 items-start ${sizeClasses.container} relative rounded-lg shrink-0 w-full transition-all duration-200 ${getBorderClasses()}`}
+        className={`bg-white border border-solid box-border flex gap-1 items-center ${sizeClasses.container} relative rounded-lg shrink-0 w-full transition-all duration-200 ${getBorderClasses()}`}
         onMouseEnter={() => !disabled && setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
+        {prefix && (
+          <span className={`shrink-0 font-normal ${sizeClasses.text} text-[#6b7280] tracking-[0.5px] select-none`}>
+            {prefix}
+          </span>
+        )}
         <input
           ref={inputRef}
           id={id}

@@ -2,34 +2,56 @@ export type AccountType = 'existing_customer' | 'prospect';
 
 export type RequestType = 'zero-deposit' | 'partial-role' | 'partial-company';
 
-export type SubmissionRequestType = 'eor' | 'cor' | 'both';
+export type ProductType = 'eor' | 'cor' | 'both';
 
-export interface CompanyInfo {
-  companyLegalName: string;
-  workEmail: string;
-  countryOfIncorporation: string;
-  companyTaxId: string;
-  companyAddress: string;
+export interface Address {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
 }
 
-export interface EmployeeInfo {
+export interface IntakeInfo {
+  firstName: string;
+  lastName: string;
+  companyLegalName: string;
+  workEmail: string;
+  phoneCountryCode: string;
+  phoneNumber: string;
+}
+
+export interface IntakeData {
+  accountType: AccountType | '';
+  info: IntakeInfo;
+}
+
+export interface CompanyInfo {
+  companyAddress: Address;
+  incorporatedAddress: Address;
+  companyPhoneCountryCode: string;
+  companyPhoneNumber: string;
+  companyEntityType: string;
+  industry: string;
+  companyDbaName: string;
+  companyTaxId: string;
+  companyWebsite: string;
+}
+
+export interface EorCountryEntry {
+  id: string;
+  country: string;
   numberOfEmployees: string;
   avgMonthlySalaryUsd: string;
   avgEoyBonusUsd: string;
 }
 
-export interface ContractorInfo {
+export interface CorCountryEntry {
+  id: string;
+  country: string;
   numberOfMonthlyHourlyContractors: string;
   numberOfMilestoneContractors: string;
   avgMonthlyPayUsd: string;
   avgMilestoneAmountUsd: string;
-}
-
-export interface CountryRequest {
-  id: string;
-  country: string;
-  employeeInfo: EmployeeInfo;
-  contractorInfo: ContractorInfo;
 }
 
 export interface FinancialDetails {
@@ -39,65 +61,69 @@ export interface FinancialDetails {
 }
 
 export interface UnderwritingFormData {
-  accountType: AccountType | '';
   companyInfo: CompanyInfo;
   avgMonthlyPayroll: string;
-  submissionRequestType: SubmissionRequestType | '';
-  countryRequests: CountryRequest[];
+  productType: ProductType | '';
+  eorCountryRequests: EorCountryEntry[];
+  corCountryRequests: CorCountryEntry[];
   financialDetails: FinancialDetails;
   additionalConsiderations: string;
 }
 
 export interface FormValidationErrors {
-  accountType?: string;
-  companyLegalName?: string;
-  workEmail?: string;
-  countryOfIncorporation?: string;
-  companyTaxId?: string;
-  companyAddress?: string;
-  avgMonthlyPayroll?: string;
-  submissionRequestType?: string;
-  countryRequests?: string;
-  bankStatements?: string;
   [key: string]: string | undefined;
 }
 
 export interface SubmissionResponse {
-  caseId: string;
   status: 'pending';
 }
 
-export function createEmptyCountryRequest(id: string): CountryRequest {
+export function createEmptyAddress(): Address {
+  return { street: '', city: '', state: '', zipCode: '' };
+}
+
+export function createEmptyCompanyInfo(): CompanyInfo {
+  return {
+    companyAddress: createEmptyAddress(),
+    incorporatedAddress: createEmptyAddress(),
+    companyPhoneCountryCode: '+1',
+    companyPhoneNumber: '',
+    companyEntityType: '',
+    industry: '',
+    companyDbaName: '',
+    companyTaxId: '',
+    companyWebsite: '',
+  };
+}
+
+export function createEmptyEorEntry(id: string): EorCountryEntry {
   return {
     id,
     country: '',
-    employeeInfo: {
-      numberOfEmployees: '',
-      avgMonthlySalaryUsd: '',
-      avgEoyBonusUsd: '',
-    },
-    contractorInfo: {
-      numberOfMonthlyHourlyContractors: '',
-      numberOfMilestoneContractors: '',
-      avgMonthlyPayUsd: '',
-      avgMilestoneAmountUsd: '',
-    },
+    numberOfEmployees: '',
+    avgMonthlySalaryUsd: '',
+    avgEoyBonusUsd: '',
+  };
+}
+
+export function createEmptyCorEntry(id: string): CorCountryEntry {
+  return {
+    id,
+    country: '',
+    numberOfMonthlyHourlyContractors: '',
+    numberOfMilestoneContractors: '',
+    avgMonthlyPayUsd: '',
+    avgMilestoneAmountUsd: '',
   };
 }
 
 export function createEmptyFormData(): UnderwritingFormData {
   return {
-    accountType: '',
-    companyInfo: {
-      companyLegalName: '',
-      workEmail: '',
-      countryOfIncorporation: '',
-      companyTaxId: '',
-      companyAddress: '',
-    },
+    companyInfo: createEmptyCompanyInfo(),
     avgMonthlyPayroll: '',
-    submissionRequestType: '',
-    countryRequests: [createEmptyCountryRequest('default-1')],
+    productType: '',
+    eorCountryRequests: [],
+    corCountryRequests: [],
     financialDetails: {
       bankStatements: [],
       otherFinancialDocs: [],

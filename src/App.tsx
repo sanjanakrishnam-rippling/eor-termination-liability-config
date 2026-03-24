@@ -1,4 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import IntakeFormView from './views/IntakeFormView';
+import EmailSentView from './views/EmailSentView';
 import UnderwritingFormView from './views/UnderwritingFormView';
 import SubmissionConfirmationView from './views/SubmissionConfirmationView';
 import DevToolbar from './components/DevToolbar';
@@ -22,7 +24,9 @@ function AppContent() {
       <AppHeader />
       <main className="flex-1 flex flex-col">
         <Routes>
-          <Route path="/apply" element={<UnderwritingFormView />} />
+          <Route path="/apply" element={<IntakeFormView />} />
+          <Route path="/apply/email-sent" element={<EmailSentView />} />
+          <Route path="/apply/form" element={<UnderwritingFormView />} />
           <Route path="/apply/confirmation" element={<SubmissionConfirmationView />} />
           <Route path="*" element={<Navigate to="/apply" replace />} />
         </Routes>

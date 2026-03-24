@@ -1,70 +1,130 @@
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useUnderwritingForm } from '../hooks/useUnderwritingForm';
 import { submitUnderwritingApplication } from '../utils/api';
 import { countries } from '../utils/countries';
-import type { RequestType } from '../types/underwriting';
+import { v4 as uuidv4 } from 'uuid';
 
-import FormSection from '../components/FormSection';
 import InputText from '../components/InputText';
 import Select from '../components/Select';
-import RadioButton, { useRadioGroup } from '../components/RadioButton';
 import FileUpload from '../components/FileUpload';
 import TextArea from '../components/TextArea';
 import Button from '../components/Button';
 
-const REQUEST_TYPE_LABELS: Record<RequestType, string> = {
-  'zero-deposit': 'Zero Deposit',
-  'partial-role': 'Partial Deposit Waiver for Role',
-  'partial-company': 'Partial Deposit Waiver for Company',
-};
+import type { EorCountryEntry, CorCountryEntry } from '../types/underwriting';
+import type { SelectOption } from '../components/Select';
 
-const SUBMISSION_TYPE_OPTIONS = [
-  { id: 'eor', label: 'Employer of Record' },
+const PRODUCT_TYPE_OPTIONS = [
+  { id: 'eor', label: 'Employer of Record Request' },
   { id: 'cor', label: 'Contractor of Record' },
   { id: 'both', label: 'Both' },
 ];
 
-export default function UnderwritingFormView() {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+const ENTITY_TYPE_OPTIONS = [
+  { id: 'llc', label: 'LLC' },
+  { id: 'corporation', label: 'Corporation' },
+  { id: 'partnership', label: 'Partnership' },
+  { id: 's_corp', label: 'S Corporation' },
+  { id: 'c_corp', label: 'C Corporation' },
+  { id: 'sole_proprietorship', label: 'Sole Proprietorship' },
+  { id: 'nonprofit', label: 'Non-profit' },
+  { id: 'other', label: 'Other' },
+];
 
-  const rawType = searchParams.get('type') as RequestType | null;
-  const requestType =
-    rawType && Object.keys(REQUEST_TYPE_LABELS).includes(rawType) ? rawType : null;
+const INDUSTRY_OPTIONS = [
+  { id: 'technology', label: 'Technology' },
+  { id: 'healthcare', label: 'Healthcare' },
+  { id: 'finance', label: 'Finance & Banking' },
+  { id: 'manufacturing', label: 'Manufacturing' },
+  { id: 'retail', label: 'Retail & E-commerce' },
+  { id: 'education', label: 'Education' },
+  { id: 'consulting', label: 'Consulting & Professional Services' },
+  { id: 'media', label: 'Media & Entertainment' },
+  { id: 'real_estate', label: 'Real Estate' },
+  { id: 'energy', label: 'Energy & Utilities' },
+  { id: 'transportation', label: 'Transportation & Logistics' },
+  { id: 'hospitality', label: 'Hospitality & Tourism' },
+  { id: 'agriculture', label: 'Agriculture' },
+  { id: 'construction', label: 'Construction' },
+  { id: 'legal', label: 'Legal' },
+  { id: 'telecom', label: 'Telecommunications' },
+  { id: 'other', label: 'Other' },
+];
+
+const US_STATES = [
+  { id: 'AL', label: 'Alabama' }, { id: 'AK', label: 'Alaska' }, { id: 'AZ', label: 'Arizona' },
+  { id: 'AR', label: 'Arkansas' }, { id: 'CA', label: 'California' }, { id: 'CO', label: 'Colorado' },
+  { id: 'CT', label: 'Connecticut' }, { id: 'DE', label: 'Delaware' }, { id: 'FL', label: 'Florida' },
+  { id: 'GA', label: 'Georgia' }, { id: 'HI', label: 'Hawaii' }, { id: 'ID', label: 'Idaho' },
+  { id: 'IL', label: 'Illinois' }, { id: 'IN', label: 'Indiana' }, { id: 'IA', label: 'Iowa' },
+  { id: 'KS', label: 'Kansas' }, { id: 'KY', label: 'Kentucky' }, { id: 'LA', label: 'Louisiana' },
+  { id: 'ME', label: 'Maine' }, { id: 'MD', label: 'Maryland' }, { id: 'MA', label: 'Massachusetts' },
+  { id: 'MI', label: 'Michigan' }, { id: 'MN', label: 'Minnesota' }, { id: 'MS', label: 'Mississippi' },
+  { id: 'MO', label: 'Missouri' }, { id: 'MT', label: 'Montana' }, { id: 'NE', label: 'Nebraska' },
+  { id: 'NV', label: 'Nevada' }, { id: 'NH', label: 'New Hampshire' }, { id: 'NJ', label: 'New Jersey' },
+  { id: 'NM', label: 'New Mexico' }, { id: 'NY', label: 'New York' }, { id: 'NC', label: 'North Carolina' },
+  { id: 'ND', label: 'North Dakota' }, { id: 'OH', label: 'Ohio' }, { id: 'OK', label: 'Oklahoma' },
+  { id: 'OR', label: 'Oregon' }, { id: 'PA', label: 'Pennsylvania' }, { id: 'RI', label: 'Rhode Island' },
+  { id: 'SC', label: 'South Carolina' }, { id: 'SD', label: 'South Dakota' }, { id: 'TN', label: 'Tennessee' },
+  { id: 'TX', label: 'Texas' }, { id: 'UT', label: 'Utah' }, { id: 'VT', label: 'Vermont' },
+  { id: 'VA', label: 'Virginia' }, { id: 'WA', label: 'Washington' }, { id: 'WV', label: 'West Virginia' },
+  { id: 'WI', label: 'Wisconsin' }, { id: 'WY', label: 'Wyoming' }, { id: 'DC', label: 'District of Columbia' },
+];
+
+const PHONE_CODES = [
+  { id: '+1', label: '+1 US' },
+  { id: '+44', label: '+44 UK' },
+  { id: '+91', label: '+91 IN' },
+  { id: '+49', label: '+49 DE' },
+  { id: '+33', label: '+33 FR' },
+  { id: '+61', label: '+61 AU' },
+  { id: '+81', label: '+81 JP' },
+  { id: '+86', label: '+86 CN' },
+  { id: '+55', label: '+55 BR' },
+  { id: '+52', label: '+52 MX' },
+];
+
+export default function UnderwritingFormView() {
+  const navigate = useNavigate();
 
   const {
     formData,
     errors,
     isSubmitting,
-    setAccountType,
     setCompanyField,
+    setCompanyAddress,
+    setIncorporatedAddress,
     setAvgMonthlyPayroll,
-    setSubmissionRequestType,
-    addCountryRequest,
-    removeCountryRequest,
-    updateCountryRequest,
-    updateEmployeeInfo,
-    updateContractorInfo,
+    setProductType,
+    addEorEntry,
+    removeEorEntry,
+    addCorEntry,
+    removeCorEntry,
     setBankStatements,
     setOtherFinancialDocs,
     setCensusFile,
     setAdditionalConsiderations,
     validate,
     setIsSubmitting,
-  } = useUnderwritingForm(requestType);
+  } = useUnderwritingForm();
 
-  const accountRadio = useRadioGroup(formData.accountType);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [saveMessage, setSaveMessage] = useState('');
+  const [eorModalOpen, setEorModalOpen] = useState(false);
+  const [corModalOpen, setCorModalOpen] = useState(false);
 
-  const handleAccountSelect = (value: string) => {
-    accountRadio.handleSelect(value);
-    setAccountType(value as 'existing_customer' | 'prospect');
+  const handleSave = () => {
+    const saved = { formData };
+    localStorage.setItem('underwriting_draft', JSON.stringify(saved));
+    setSaveMessage('Draft saved successfully');
+    setTimeout(() => setSaveMessage(''), 3000);
   };
 
   const handleSubmit = async () => {
     if (!validate()) {
-      const firstErrorKey = Object.keys(errors)[0];
-      if (firstErrorKey) {
-        const el = document.getElementById(`field-${firstErrorKey}`);
+      const errorKeys = Object.keys(errors);
+      if (errorKeys.length > 0) {
+        const el = document.getElementById(`field-${errorKeys[0]}`);
         el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
       return;
@@ -72,8 +132,8 @@ export default function UnderwritingFormView() {
 
     setIsSubmitting(true);
     try {
-      const result = await submitUnderwritingApplication(formData);
-      navigate(`/apply/confirmation?caseId=${result.caseId}`);
+      await submitUnderwritingApplication(formData);
+      navigate('/apply/confirmation');
     } catch (err) {
       console.error('Submission failed:', err);
     } finally {
@@ -81,385 +141,855 @@ export default function UnderwritingFormView() {
     }
   };
 
-  const usedCountryIds = formData.countryRequests.map((cr) => cr.country).filter(Boolean);
-  const availableCountries = countries.filter((c) => !usedCountryIds.includes(c.id));
+  const goNext = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setCurrentStep((s) => Math.min(s + 1, 2));
+  };
+
+  const goBack = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setCurrentStep((s) => Math.max(s - 1, 0));
+  };
+
+
+  const showEor = formData.productType === 'eor' || formData.productType === 'both';
+  const showCor = formData.productType === 'cor' || formData.productType === 'both';
+
+  const usedEorCountryIds = formData.eorCountryRequests.map((e) => e.country).filter(Boolean);
+  const availableEorCountries = countries.filter((c) => !usedEorCountryIds.includes(c.id));
+
+  const usedCorCountryIds = formData.corCountryRequests.map((e) => e.country).filter(Boolean);
+  const availableCorCountries = countries.filter((c) => !usedCorCountryIds.includes(c.id));
 
   const payrollNum = parseFloat(formData.avgMonthlyPayroll.replace(/[^0-9.]/g, '')) || 0;
   const isOtherFinancialRequired = payrollNum > 500000;
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-[720px] mx-auto px-6 py-10">
-        {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-[26px] font-bold leading-[34px] text-[#1a1a1a] tracking-[-0.2px]">
-            EOR Underwriting Application
-          </h1>
-          <p className="mt-3 text-[16px] leading-[24px] text-[#6b7280]">
-            Enter your info and verify your email to start your underwriting application.
-            If you have already filled out this form, you can{' '}
-            <a
-              href="/apply/continue"
-              className="font-semibold text-[#1e4aa9] no-underline hover:text-[#152d4a] transition-colors"
-            >
-              continue with your application
-            </a>
-            .
-          </p>
-        </div>
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit();
-          }}
-          className="flex flex-col gap-10"
-        >
-          {/* ── Section 1: Your Rippling Account ── */}
-          <FormSection
-            title="Your Rippling Account"
-            description="Are you an existing Rippling customer or a prospect?"
-          >
-            <div id="field-accountType" className="flex flex-col gap-2">
-              <RadioButton
-                id="account-existing"
-                value="existing_customer"
-                label="Existing Rippling Customer"
-                isSelected={formData.accountType === 'existing_customer'}
-                isFocused={accountRadio.focusedId === 'account-existing'}
-                onSelect={handleAccountSelect}
-                onFocus={accountRadio.handleFocus}
-                onBlur={accountRadio.handleBlur}
-                onMouseEnter={accountRadio.handleMouseEnter}
-                onMouseLeave={accountRadio.handleMouseLeave}
-              />
-              <RadioButton
-                id="account-prospect"
-                value="prospect"
-                label="Prospect"
-                isSelected={formData.accountType === 'prospect'}
-                isFocused={accountRadio.focusedId === 'account-prospect'}
-                onSelect={handleAccountSelect}
-                onFocus={accountRadio.handleFocus}
-                onBlur={accountRadio.handleBlur}
-                onMouseEnter={accountRadio.handleMouseEnter}
-                onMouseLeave={accountRadio.handleMouseLeave}
-              />
-              {errors.accountType && (
-                <p className="text-[#c3402c] text-[12px] leading-[16px]">
-                  {errors.accountType}
-                </p>
-              )}
-            </div>
-          </FormSection>
-
-          {/* ── Section 2: Company Information ── */}
-          <FormSection title="Company Information">
-            <div id="field-companyLegalName">
-              <InputText
-                label="Company Legal Name"
-                value={formData.companyInfo.companyLegalName}
-                onChange={(v) => setCompanyField('companyLegalName', v)}
-                required
-                error={!!errors.companyLegalName}
-                errorMessage={errors.companyLegalName}
-              />
-            </div>
-            <div id="field-workEmail">
-              <InputText
-                label="Work Email Address"
-                type="email"
-                value={formData.companyInfo.workEmail}
-                onChange={(v) => setCompanyField('workEmail', v)}
-                required
-                error={!!errors.workEmail}
-                errorMessage={errors.workEmail}
-              />
-            </div>
-            <div id="field-countryOfIncorporation">
-              <Select
-                label="Country of Incorporation"
-                value={formData.companyInfo.countryOfIncorporation}
-                options={countries}
-                onChange={(v) => setCompanyField('countryOfIncorporation', v)}
-                required
-                searchable
-                error={!!errors.countryOfIncorporation}
-                errorMessage={errors.countryOfIncorporation}
-              />
-            </div>
-            <div id="field-companyTaxId">
-              <InputText
-                label="Company Tax ID (EIN/VAT)"
-                value={formData.companyInfo.companyTaxId}
-                onChange={(v) => setCompanyField('companyTaxId', v)}
-                required
-                error={!!errors.companyTaxId}
-                errorMessage={errors.companyTaxId}
-              />
-            </div>
-            <div id="field-companyAddress">
-              <InputText
-                label="Company Address"
-                value={formData.companyInfo.companyAddress}
-                onChange={(v) => setCompanyField('companyAddress', v)}
-                required
-                error={!!errors.companyAddress}
-                errorMessage={errors.companyAddress}
-              />
-            </div>
-          </FormSection>
-
-          {/* ── Section 3: Request Information ── */}
-          <FormSection
-            title="Request Information"
-            description="Provide details about your EOR/COR request and employee/contractor information for each country."
-          >
-            <div id="field-avgMonthlyPayroll">
-              <InputText
-                label="Average Monthly Payroll (USD)"
-                value={formData.avgMonthlyPayroll}
-                onChange={setAvgMonthlyPayroll}
-                placeholder="e.g. 250000"
-                required
-                error={!!errors.avgMonthlyPayroll}
-                errorMessage={errors.avgMonthlyPayroll}
-              />
-            </div>
-            <div id="field-submissionRequestType">
-              <Select
-                label="Submission Request Type"
-                value={formData.submissionRequestType}
-                options={SUBMISSION_TYPE_OPTIONS}
-                onChange={(v) => setSubmissionRequestType(v as typeof formData.submissionRequestType)}
-                required
-                error={!!errors.submissionRequestType}
-                errorMessage={errors.submissionRequestType}
-              />
-            </div>
-
-            {/* Per-country requests */}
-            <div id="field-countryRequests" className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <p className="font-semibold text-[14px] text-[#1a1a1a] tracking-[0.1px]">
-                  Countries
-                </p>
-                <Button
-                  appearance="secondary"
-                  size="sm"
-                  onClick={addCountryRequest}
-                >
-                  + Add Country
-                </Button>
-              </div>
-              {errors.countryRequests && formData.countryRequests.length === 0 && (
-                <p className="text-[#c3402c] text-[12px] leading-[16px]">
-                  {errors.countryRequests}
-                </p>
-              )}
-
-              {formData.countryRequests.map((cr, idx) => (
-                <CountryRequestCard
-                  key={cr.id}
-                  index={idx}
-                  countryRequest={cr}
-                  availableCountries={availableCountries}
-                  errors={errors}
-                  onCountryChange={(v) => updateCountryRequest(cr.id, { country: v })}
-                  onEmployeeChange={(field, value) => updateEmployeeInfo(cr.id, field, value)}
-                  onContractorChange={(field, value) => updateContractorInfo(cr.id, field, value)}
-                  onRemove={() => removeCountryRequest(cr.id)}
-                />
-              ))}
-            </div>
-          </FormSection>
-
-          {/* ── Section 4: Financial and Other Details ── */}
-          <FormSection
-            title="Financial and Other Details"
-            description="Upload the required financial documents."
-          >
-            <div id="field-bankStatements">
-              <FileUpload
-                label="Bank Statements"
-                files={formData.financialDetails.bankStatements}
-                onFilesChange={setBankStatements}
-                required
-                helpText="Most recent 3 months of bank statements from all bank accounts with cash/cash-equivalent balances."
-                error={!!errors.bankStatements}
-                errorMessage={errors.bankStatements}
-              />
-            </div>
-            <div id="field-otherFinancialDocs">
-              <FileUpload
-                label="Other Financial Information"
-                files={formData.financialDetails.otherFinancialDocs}
-                onFilesChange={setOtherFinancialDocs}
-                required={isOtherFinancialRequired}
-                helpText={
-                  isOtherFinancialRequired
-                    ? 'Required: Past 2 years of financial statements (audited or CPA-prepared income statement, balance sheet, & statement of cash-flows) and documentation showing terms for bank line of credit & current balance.'
-                    : 'Past 2 years of financial statements, credit line documentation. Required if monthly EOR is > $500k.'
-                }
-                error={!!errors.otherFinancialDocs}
-                errorMessage={errors.otherFinancialDocs}
-              />
-            </div>
-            <FileUpload
-              label="Census File"
-              files={formData.financialDetails.censusFile}
-              onFilesChange={setCensusFile}
-              helpText="If moving workers from another provider, attach an export (CSV/XLSX) of their census."
-              accept=".csv,.xlsx,.xls"
-            />
-          </FormSection>
-
-          {/* ── Section 5: Additional Considerations ── */}
-          <FormSection
-            title="Additional Considerations"
-            description="Any other information you'd like the underwriting team to review."
-          >
-            <TextArea
-              label="Additional Notes"
-              value={formData.additionalConsiderations}
-              onChange={setAdditionalConsiderations}
-              placeholder="Enter any additional details..."
-              rows={5}
-            />
-          </FormSection>
-
-          {/* ── Submit ── */}
-          <div className="flex justify-end pt-4 pb-10">
-            <Button
-              type="submit"
-              appearance="primary"
-              size="lg"
-              disabled={isSubmitting}
-              className="min-w-[200px]"
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit Application'}
-            </Button>
+    <div className="min-h-screen bg-white flex flex-col">
+      <div className="flex-1">
+        <div className="max-w-[720px] mx-auto px-6 py-10">
+          <div className="mb-6">
+            <h1 className="text-[26px] font-bold leading-[34px] text-[#1a1a1a] tracking-[-0.2px]">
+              EOR Underwriting Application
+            </h1>
           </div>
-        </form>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}
+            className="flex flex-col gap-6"
+          >
+            {/* ─── Step 1: Company Information ─── */}
+            {currentStep === 0 && (
+              <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-1 mb-2">
+                  <h2 className="text-[18px] font-bold leading-[26px] text-[#1a1a1a] tracking-[0.1px]">
+                    Step 1/3: Company Information
+                  </h2>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <p className="font-semibold text-[14px] text-[#1a1a1a] tracking-[0.1px]">
+                    Company address
+                  </p>
+                  <div id="field-companyStreet">
+                    <InputText
+                      label="Street"
+                      value={formData.companyInfo.companyAddress.street}
+                      onChange={(v) => setCompanyAddress('street', v)}
+                      required
+                      error={!!errors.companyStreet}
+                      errorMessage={errors.companyStreet}
+                    />
+                  </div>
+                  <div id="field-companyCity">
+                    <InputText
+                      label="City"
+                      value={formData.companyInfo.companyAddress.city}
+                      onChange={(v) => setCompanyAddress('city', v)}
+                      required
+                      error={!!errors.companyCity}
+                      errorMessage={errors.companyCity}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div id="field-companyState">
+                      <Select
+                        label="State"
+                        value={formData.companyInfo.companyAddress.state}
+                        options={US_STATES}
+                        onChange={(v) => setCompanyAddress('state', v)}
+                        required
+                        searchable
+                        error={!!errors.companyState}
+                        errorMessage={errors.companyState}
+                      />
+                    </div>
+                    <div id="field-companyZip">
+                      <InputText
+                        label="Zip code"
+                        value={formData.companyInfo.companyAddress.zipCode}
+                        onChange={(v) => setCompanyAddress('zipCode', v)}
+                        required
+                        error={!!errors.companyZip}
+                        errorMessage={errors.companyZip}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-semibold text-[14px] text-[#1a1a1a] tracking-[0.1px]">
+                      Company incorporated address
+                    </p>
+                    <div className="relative group">
+                      <svg className="w-4 h-4 text-[#9ca3af] cursor-help" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                      <div className="absolute z-10 hidden group-hover:block bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-[#1a1a1a] text-white text-[12px] rounded-lg whitespace-nowrap shadow-lg">
+                        Leave blank if same as company address
+                      </div>
+                    </div>
+                  </div>
+                  <InputText
+                    label="Street"
+                    value={formData.companyInfo.incorporatedAddress.street}
+                    onChange={(v) => setIncorporatedAddress('street', v)}
+                  />
+                  <InputText
+                    label="City"
+                    value={formData.companyInfo.incorporatedAddress.city}
+                    onChange={(v) => setIncorporatedAddress('city', v)}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Select
+                      label="State"
+                      value={formData.companyInfo.incorporatedAddress.state}
+                      options={US_STATES}
+                      onChange={(v) => setIncorporatedAddress('state', v)}
+                      searchable
+                    />
+                    <InputText
+                      label="Zip code"
+                      value={formData.companyInfo.incorporatedAddress.zipCode}
+                      onChange={(v) => setIncorporatedAddress('zipCode', v)}
+                    />
+                  </div>
+                </div>
+
+                <div id="field-companyPhone">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex gap-1 items-center">
+                      <p className="font-semibold leading-[22px] text-[#1a1a1a] text-[14px] tracking-[0.1px]">
+                        Company phone number
+                      </p>
+                      <div className="flex flex-col justify-center leading-[0] text-[#c3402c] whitespace-nowrap">
+                        <p className="leading-[22px]">*</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <select
+                        value={formData.companyInfo.companyPhoneCountryCode}
+                        onChange={(e) => setCompanyField('companyPhoneCountryCode', e.target.value)}
+                        className="h-10 px-3 py-[9px] rounded-lg border border-[#d5d5d5] bg-white text-[14px] text-[#1a1a1a] outline-none focus:border-[#4a6ba6] transition-all duration-200 w-[110px] shrink-0"
+                      >
+                        {PHONE_CODES.map((code) => (
+                          <option key={code.id} value={code.id}>
+                            {code.label}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="tel"
+                        value={formData.companyInfo.companyPhoneNumber}
+                        onChange={(e) => setCompanyField('companyPhoneNumber', e.target.value)}
+                        placeholder="Company phone number"
+                        className={`flex-1 h-10 px-4 py-[9px] rounded-lg border bg-white text-[15px] leading-[22px] text-black tracking-[0.5px] outline-none transition-all duration-200 ${
+                          errors.companyPhone ? 'border-[#c3402c]' : 'border-[#d5d5d5] focus:border-[#4a6ba6]'
+                        }`}
+                      />
+                    </div>
+                    {errors.companyPhone && (
+                      <p className="text-[#c3402c] text-[12px] leading-[16px]">{errors.companyPhone}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div id="field-companyEntityType">
+                  <Select
+                    label="Company entity type"
+                    value={formData.companyInfo.companyEntityType}
+                    options={ENTITY_TYPE_OPTIONS}
+                    onChange={(v) => setCompanyField('companyEntityType', v)}
+                    required
+                    searchable
+                    error={!!errors.companyEntityType}
+                    errorMessage={errors.companyEntityType}
+                  />
+                </div>
+
+                <div id="field-industry">
+                  <Select
+                    label="What industry does your company operate in?"
+                    value={formData.companyInfo.industry}
+                    options={INDUSTRY_OPTIONS}
+                    onChange={(v) => setCompanyField('industry', v)}
+                    required
+                    searchable
+                    error={!!errors.industry}
+                    errorMessage={errors.industry}
+                  />
+                </div>
+
+                <div id="field-companyDbaName">
+                  <InputText
+                    label="Company DBA name"
+                    value={formData.companyInfo.companyDbaName}
+                    onChange={(v) => setCompanyField('companyDbaName', v)}
+                    required
+                    error={!!errors.companyDbaName}
+                    errorMessage={errors.companyDbaName}
+                  />
+                </div>
+
+                <div id="field-companyTaxId">
+                  <InputText
+                    label="Company tax ID"
+                    value={formData.companyInfo.companyTaxId}
+                    onChange={(v) => setCompanyField('companyTaxId', v)}
+                    required
+                    error={!!errors.companyTaxId}
+                    errorMessage={errors.companyTaxId}
+                  />
+                </div>
+
+                <InputText
+                  label="Company website (optional)"
+                  value={formData.companyInfo.companyWebsite}
+                  onChange={(v) => setCompanyField('companyWebsite', v)}
+                  type="url"
+                  placeholder="Company website (optional)"
+                />
+
+                {/* Step 1 Footer */}
+                <StepFooter
+                  onNext={goNext}
+                  onSave={handleSave}
+                  saveMessage={saveMessage}
+                />
+              </div>
+            )}
+
+            {/* ─── Step 2: Request Details ─── */}
+            {currentStep === 1 && (
+              <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-1 mb-2">
+                  <h2 className="text-[18px] font-bold leading-[26px] text-[#1a1a1a] tracking-[0.1px]">
+                    Step 2/3: Request Details
+                  </h2>
+                  <p className="text-[14px] leading-[20px] text-[#6b7280] tracking-[0.1px]">
+                    Provide details about your EOR/COR request and employee/contractor information for each country.
+                  </p>
+                </div>
+
+                <div id="field-productType">
+                  <Select
+                    label="Product Type"
+                    value={formData.productType}
+                    options={PRODUCT_TYPE_OPTIONS}
+                    onChange={(v) => setProductType(v as typeof formData.productType)}
+                    required
+                    error={!!errors.productType}
+                    errorMessage={errors.productType}
+                  />
+                </div>
+
+                {formData.productType && (
+                  <>
+                    {/* Company Payroll */}
+                    <div className="flex flex-col gap-3 border border-[#e5e7eb] rounded-lg p-5">
+                      <p className="text-[14px] leading-[20px] text-[#1a1a1a]">
+                        <span className="font-semibold">Company Payroll:</span>{' '}
+                        Enter the total payroll for the company, including EOR EEs, non-EOR EEs and contractors.
+                      </p>
+                      <div id="field-avgMonthlyPayroll">
+                        <InputText
+                          label="1 Month of Payroll in USD (Avg)"
+                          value={formData.avgMonthlyPayroll}
+                          onChange={setAvgMonthlyPayroll}
+                          placeholder="0"
+                          prefix="USD $"
+                          required
+                          error={!!errors.avgMonthlyPayroll}
+                          errorMessage={errors.avgMonthlyPayroll}
+                        />
+                      </div>
+                    </div>
+
+                    {/* EOR Section */}
+                    {showEor && (
+                      <div id="field-eorCountryRequests" className="flex flex-col gap-4">
+                        <div className="border border-[#e5e7eb] rounded-lg p-5 flex flex-col gap-4">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-[16px] font-bold text-[#1a1a1a]">EOR EE Details</h3>
+                            <Button
+                              appearance="primary"
+                              size="sm"
+                              onClick={() => setEorModalOpen(true)}
+                            >
+                              + Add Country
+                            </Button>
+                          </div>
+    
+                          {errors.eorCountryRequests && formData.eorCountryRequests.length === 0 && (
+                            <p className="text-[#c3402c] text-[12px] leading-[16px]">
+                              {errors.eorCountryRequests}
+                            </p>
+                          )}
+
+                          <EorTable
+                            entries={formData.eorCountryRequests}
+                            onRemove={removeEorEntry}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* COR Section */}
+                    {showCor && (
+                      <div id="field-corCountryRequests" className="flex flex-col gap-4">
+                        <div className="border border-[#e5e7eb] rounded-lg p-5 flex flex-col gap-4">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-[16px] font-bold text-[#1a1a1a]">Contractor of Record Details</h3>
+                            <Button
+                              appearance="primary"
+                              size="sm"
+                              onClick={() => setCorModalOpen(true)}
+                            >
+                              + Add Country
+                            </Button>
+                          </div>
+    
+                          {errors.corCountryRequests && formData.corCountryRequests.length === 0 && (
+                            <p className="text-[#c3402c] text-[12px] leading-[16px]">
+                              {errors.corCountryRequests}
+                            </p>
+                          )}
+
+                          <CorTable
+                            entries={formData.corCountryRequests}
+                            onRemove={removeCorEntry}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Step 2 Footer */}
+                <StepFooter
+                  onBack={goBack}
+                  onNext={goNext}
+                  onSave={handleSave}
+                  saveMessage={saveMessage}
+                />
+              </div>
+            )}
+
+            {/* ─── Step 3: Financial & Other Details ─── */}
+            {currentStep === 2 && (
+              <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-1 mb-2">
+                  <h2 className="text-[18px] font-bold leading-[26px] text-[#1a1a1a] tracking-[0.1px]">
+                    Step 3/3: Financial & Other Details
+                  </h2>
+                  <p className="text-[14px] leading-[20px] text-[#6b7280] tracking-[0.1px]">
+                    Upload the required financial documents and add any additional notes.
+                  </p>
+                </div>
+
+                <div id="field-bankStatements">
+                  <FileUpload
+                    label="Bank Statements"
+                    files={formData.financialDetails.bankStatements}
+                    onFilesChange={setBankStatements}
+                    required
+                    helpText="Submit the last 3 months of bank statements (as PDFs). We review total cash balance relative to payroll, so if the company has multiple cash accounts, please upload 3 months for each."
+                    error={!!errors.bankStatements}
+                    errorMessage={errors.bankStatements}
+                  />
+                </div>
+                <div id="field-otherFinancialDocs">
+                  <FileUpload
+                    label="Other Financial Information"
+                    files={formData.financialDetails.otherFinancialDocs}
+                    onFilesChange={setOtherFinancialDocs}
+                    required={isOtherFinancialRequired}
+                    helpText={
+                      isOtherFinancialRequired
+                        ? 'Required: Past 2 years of financial statements (audited or CPA-prepared income statement, balance sheet, & statement of cash-flows) and documentation showing terms for bank line of credit & current balance.'
+                        : 'Past 2 years of financial statements, credit line documentation. Required if monthly EOR is > $500k.'
+                    }
+                    error={!!errors.otherFinancialDocs}
+                    errorMessage={errors.otherFinancialDocs}
+                  />
+                </div>
+                <FileUpload
+                  label="Census File"
+                  files={formData.financialDetails.censusFile}
+                  onFilesChange={setCensusFile}
+                  helpText="If moving workers from another provider, attach an export (CSV/XLSX) of their census."
+                  accept=".csv,.xlsx,.xls"
+                />
+
+                <div className="border-t border-[#e5e7eb] pt-5 mt-2">
+                  <div className="flex flex-col gap-1 mb-4">
+                    <h3 className="text-[16px] font-bold text-[#1a1a1a]">Additional Considerations</h3>
+                    <p className="text-[14px] leading-[20px] text-[#6b7280]">
+                      Any other information you'd like the underwriting team to review.
+                    </p>
+                  </div>
+                  <TextArea
+                    label="Additional Notes"
+                    value={formData.additionalConsiderations}
+                    onChange={setAdditionalConsiderations}
+                    placeholder="Enter any additional details..."
+                    rows={5}
+                  />
+                </div>
+
+                {/* Step 3 Footer */}
+                <StepFooter
+                  onBack={goBack}
+                  onSave={handleSave}
+                  saveMessage={saveMessage}
+                  submitLabel={isSubmitting ? 'Submitting...' : 'Submit'}
+                  submitDisabled={isSubmitting}
+                  isLastStep
+                />
+              </div>
+            )}
+          </form>
+
+          {/* EOR Modal */}
+          {eorModalOpen && (
+            <AddEorModal
+              availableCountries={availableEorCountries}
+              onAdd={(entry) => {
+                addEorEntry(entry);
+                setEorModalOpen(false);
+              }}
+              onClose={() => setEorModalOpen(false)}
+            />
+          )}
+
+          {/* COR Modal */}
+          {corModalOpen && (
+            <AddCorModal
+              availableCountries={availableCorCountries}
+              onAdd={(entry) => {
+                addCorEntry(entry);
+                setCorModalOpen(false);
+              }}
+              onClose={() => setCorModalOpen(false)}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-/* ── Country Request Sub-Form ── */
+/* ─── Step Footer ─── */
 
-import type { CountryRequest, FormValidationErrors } from '../types/underwriting';
-import type { SelectOption } from '../components/Select';
-
-interface CountryRequestCardProps {
-  index: number;
-  countryRequest: CountryRequest;
-  availableCountries: SelectOption[];
-  errors: FormValidationErrors;
-  onCountryChange: (value: string) => void;
-  onEmployeeChange: (field: keyof CountryRequest['employeeInfo'], value: string) => void;
-  onContractorChange: (field: keyof CountryRequest['contractorInfo'], value: string) => void;
-  onRemove: () => void;
+function StepFooter({
+  onBack,
+  onNext,
+  onSave,
+  saveMessage,
+  submitLabel,
+  submitDisabled,
+  isLastStep,
+}: {
+  onBack?: () => void;
+  onNext?: () => void;
+  onSave: () => void;
+  saveMessage: string;
+  submitLabel?: string;
+  submitDisabled?: boolean;
+  isLastStep?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between pt-6 pb-4 border-t border-[#e5e7eb] mt-4">
+      <div className="flex items-center gap-3">
+        {onBack && (
+          <Button type="button" appearance="secondary" size="lg" onClick={onBack} className="min-w-[100px]">
+            Back
+          </Button>
+        )}
+        <Button type="button" appearance="ghost" size="lg" onClick={onSave}>
+          Save Draft
+        </Button>
+        {saveMessage && (
+          <span className="text-[13px] text-[#079F8F] font-medium">{saveMessage}</span>
+        )}
+      </div>
+      <div>
+        {isLastStep ? (
+          <Button
+            type="submit"
+            appearance="primary"
+            size="lg"
+            disabled={submitDisabled}
+            className="min-w-[200px]"
+          >
+            {submitLabel}
+          </Button>
+        ) : onNext ? (
+          <Button type="button" appearance="primary" size="lg" onClick={onNext} className="min-w-[120px]">
+            Next
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
 }
 
-function CountryRequestCard({
-  index,
-  countryRequest,
-  availableCountries,
-  errors,
-  onCountryChange,
-  onEmployeeChange,
-  onContractorChange,
+/* ─── EOR Table ─── */
+
+function EorTable({
+  entries,
   onRemove,
-}: CountryRequestCardProps) {
-  const currentCountryOption = countries.find((c) => c.id === countryRequest.country);
-  const selectableCountries = currentCountryOption
-    ? [currentCountryOption, ...availableCountries]
-    : availableCountries;
+}: {
+  entries: EorCountryEntry[];
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <div>
+      <div className="border border-[#e5e7eb] rounded-lg overflow-hidden">
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="border-b border-[#e5e7eb] bg-[#fafafa]">
+              <th className="text-left px-3 py-2 font-semibold text-[#1a1a1a] w-[60px]">Delete</th>
+              <th className="text-left px-3 py-2 font-semibold text-[#1a1a1a]">Country Code</th>
+              <th className="text-left px-3 py-2 font-semibold text-[#1a1a1a]">Number of Employees</th>
+              <th className="text-right px-3 py-2 font-semibold text-[#1a1a1a]">Average Salary</th>
+              <th className="text-right px-3 py-2 font-semibold text-[#1a1a1a]">Average Bonus</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="text-center py-6 text-[#9ca3af]">
+                  No rows found
+                </td>
+              </tr>
+            ) : (
+              entries.map((entry) => (
+                <tr key={entry.id} className="border-b border-[#e5e7eb] last:border-b-0">
+                  <td className="px-3 py-2">
+                    <button
+                      type="button"
+                      onClick={() => onRemove(entry.id)}
+                      className="text-[#c3402c] hover:text-[#a32d1c] transition-colors"
+                      aria-label="Delete row"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </td>
+                  <td className="px-3 py-2 text-[#1a1a1a]">{entry.country}</td>
+                  <td className="px-3 py-2 text-[#1a1a1a]">{entry.numberOfEmployees}</td>
+                  <td className="px-3 py-2 text-right text-[#1a1a1a]">{entry.avgMonthlySalaryUsd ? `USD $${entry.avgMonthlySalaryUsd}` : '—'}</td>
+                  <td className="px-3 py-2 text-right text-[#1a1a1a]">{entry.avgEoyBonusUsd ? `USD $${entry.avgEoyBonusUsd}` : '—'}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ─── COR Table ─── */
+
+function CorTable({
+  entries,
+  onRemove,
+}: {
+  entries: CorCountryEntry[];
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <div>
+      <div className="border border-[#e5e7eb] rounded-lg overflow-hidden">
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="border-b border-[#e5e7eb] bg-[#fafafa]">
+              <th className="text-left px-3 py-2 font-semibold text-[#1a1a1a] w-[60px]">Delete</th>
+              <th className="text-left px-3 py-2 font-semibold text-[#1a1a1a]">Country Code</th>
+              <th className="text-left px-3 py-2 font-semibold text-[#1a1a1a]">Monthly/Hourly Contractors</th>
+              <th className="text-left px-3 py-2 font-semibold text-[#1a1a1a]">Milestone Contractors</th>
+              <th className="text-right px-3 py-2 font-semibold text-[#1a1a1a]">Avg Monthly Pay</th>
+              <th className="text-right px-3 py-2 font-semibold text-[#1a1a1a]">Avg Milestone Amt</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-center py-6 text-[#9ca3af]">
+                  No rows found
+                </td>
+              </tr>
+            ) : (
+              entries.map((entry) => (
+                <tr key={entry.id} className="border-b border-[#e5e7eb] last:border-b-0">
+                  <td className="px-3 py-2">
+                    <button
+                      type="button"
+                      onClick={() => onRemove(entry.id)}
+                      className="text-[#c3402c] hover:text-[#a32d1c] transition-colors"
+                      aria-label="Delete row"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </td>
+                  <td className="px-3 py-2 text-[#1a1a1a]">{entry.country}</td>
+                  <td className="px-3 py-2 text-[#1a1a1a]">{entry.numberOfMonthlyHourlyContractors}</td>
+                  <td className="px-3 py-2 text-[#1a1a1a]">{entry.numberOfMilestoneContractors}</td>
+                  <td className="px-3 py-2 text-right text-[#1a1a1a]">{entry.avgMonthlyPayUsd ? `USD $${entry.avgMonthlyPayUsd}` : '—'}</td>
+                  <td className="px-3 py-2 text-right text-[#1a1a1a]">{entry.avgMilestoneAmountUsd ? `USD $${entry.avgMilestoneAmountUsd}` : '—'}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Add EOR Modal ─── */
+
+function AddEorModal({
+  availableCountries,
+  onAdd,
+  onClose,
+}: {
+  availableCountries: SelectOption[];
+  onAdd: (entry: EorCountryEntry) => void;
+  onClose: () => void;
+}) {
+  const [country, setCountry] = useState('');
+  const [numberOfEmployees, setNumberOfEmployees] = useState('');
+  const [avgMonthlySalaryUsd, setAvgMonthlySalaryUsd] = useState('');
+  const [avgEoyBonusUsd, setAvgEoyBonusUsd] = useState('');
+  const [modalErrors, setModalErrors] = useState<Record<string, string>>({});
+
+  const handleAdd = () => {
+    const errs: Record<string, string> = {};
+    if (!country) errs.country = 'Country is required';
+    if (!numberOfEmployees.trim()) errs.numberOfEmployees = 'Number of employees is required';
+    if (!avgMonthlySalaryUsd.trim()) errs.avgMonthlySalaryUsd = 'Average monthly salary is required';
+
+    if (Object.keys(errs).length > 0) {
+      setModalErrors(errs);
+      return;
+    }
+
+    onAdd({
+      id: uuidv4(),
+      country,
+      numberOfEmployees,
+      avgMonthlySalaryUsd,
+      avgEoyBonusUsd,
+    });
+  };
 
   return (
-    <div className="border border-[#e5e7eb] rounded-lg bg-white p-5 flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <p className="font-semibold text-[14px] text-[#1a1a1a]">Country {index + 1}</p>
-        <button
-          type="button"
-          onClick={onRemove}
-          className="text-[13px] text-[#c3402c] hover:underline"
-        >
-          Remove
-        </button>
-      </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-[560px] mx-4 p-6 flex flex-col gap-5">
+        <div className="flex items-center justify-between">
+          <h3 className="text-[18px] font-bold text-[#1a1a1a]">Add Employer of Record for a New Country</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1 hover:bg-[#f3f4f6] rounded-lg transition-colors"
+            aria-label="Close"
+          >
+            <svg className="w-5 h-5 text-[#6b7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
 
-      <Select
-        label="Country"
-        value={countryRequest.country}
-        options={selectableCountries}
-        onChange={onCountryChange}
-        required
-        searchable
-        error={!!errors[`country_${index}`]}
-        errorMessage={errors[`country_${index}`]}
-      />
-
-      {/* Employee Information */}
-      <div className="flex flex-col gap-3">
-        <p className="font-semibold text-[13px] text-[#6b7280] tracking-[0.1px]">
-          Employee Information
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <InputText
-            label="Number of Employees"
-            value={countryRequest.employeeInfo.numberOfEmployees}
-            onChange={(v) => onEmployeeChange('numberOfEmployees', v)}
+        <div className="flex flex-col gap-4">
+          <Select
+            label="Country (only one entry per company)"
+            value={country}
+            options={availableCountries}
+            onChange={setCountry}
+            placeholder="Select a country"
             required
-            error={!!errors[`employees_${index}`]}
-            errorMessage={errors[`employees_${index}`]}
+            searchable
+            error={!!modalErrors.country}
+            errorMessage={modalErrors.country}
           />
           <InputText
-            label="Avg Monthly Salary (USD)"
-            value={countryRequest.employeeInfo.avgMonthlySalaryUsd}
-            onChange={(v) => onEmployeeChange('avgMonthlySalaryUsd', v)}
+            label="Number of employees"
+            value={numberOfEmployees}
+            onChange={setNumberOfEmployees}
+            placeholder="0"
             required
-            error={!!errors[`salary_${index}`]}
-            errorMessage={errors[`salary_${index}`]}
+            error={!!modalErrors.numberOfEmployees}
+            errorMessage={modalErrors.numberOfEmployees}
           />
           <InputText
-            label="Avg EOY Bonus (USD)"
-            value={countryRequest.employeeInfo.avgEoyBonusUsd}
-            onChange={(v) => onEmployeeChange('avgEoyBonusUsd', v)}
-            placeholder="Optional"
+            label="Average monthly salary in USD"
+            value={avgMonthlySalaryUsd}
+            onChange={setAvgMonthlySalaryUsd}
+            placeholder="0"
+            prefix="USD $"
+            required
+            error={!!modalErrors.avgMonthlySalaryUsd}
+            errorMessage={modalErrors.avgMonthlySalaryUsd}
+          />
+          <InputText
+            label="Average employee EoY bonus in USD"
+            value={avgEoyBonusUsd}
+            onChange={setAvgEoyBonusUsd}
+            placeholder="0"
+            prefix="USD $"
           />
         </div>
-      </div>
 
-      {/* Contractor Information */}
-      <div className="flex flex-col gap-3">
-        <p className="font-semibold text-[13px] text-[#6b7280] tracking-[0.1px]">
-          Contractor Information
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <InputText
-            label="Monthly/Hourly Contractors"
-            value={countryRequest.contractorInfo.numberOfMonthlyHourlyContractors}
-            onChange={(v) => onContractorChange('numberOfMonthlyHourlyContractors', v)}
+        <div className="flex justify-end pt-2">
+          <Button appearance="primary" size="md" onClick={handleAdd}>
+            Add
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Add COR Modal ─── */
+
+function AddCorModal({
+  availableCountries,
+  onAdd,
+  onClose,
+}: {
+  availableCountries: SelectOption[];
+  onAdd: (entry: CorCountryEntry) => void;
+  onClose: () => void;
+}) {
+  const [country, setCountry] = useState('');
+  const [numberOfMonthlyHourlyContractors, setNumberOfMonthlyHourlyContractors] = useState('');
+  const [numberOfMilestoneContractors, setNumberOfMilestoneContractors] = useState('');
+  const [avgMonthlyPayUsd, setAvgMonthlyPayUsd] = useState('');
+  const [avgMilestoneAmountUsd, setAvgMilestoneAmountUsd] = useState('');
+  const [modalErrors, setModalErrors] = useState<Record<string, string>>({});
+
+  const handleAdd = () => {
+    const errs: Record<string, string> = {};
+    if (!country) errs.country = 'Country is required';
+    if (!numberOfMonthlyHourlyContractors.trim())
+      errs.numberOfMonthlyHourlyContractors = 'Number of monthly/hourly contractors is required';
+    if (!numberOfMilestoneContractors.trim())
+      errs.numberOfMilestoneContractors = 'Number of milestone contractors is required';
+
+    if (Object.keys(errs).length > 0) {
+      setModalErrors(errs);
+      return;
+    }
+
+    onAdd({
+      id: uuidv4(),
+      country,
+      numberOfMonthlyHourlyContractors,
+      numberOfMilestoneContractors,
+      avgMonthlyPayUsd,
+      avgMilestoneAmountUsd,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-[560px] mx-4 p-6 flex flex-col gap-5">
+        <div className="flex items-center justify-between">
+          <h3 className="text-[18px] font-bold text-[#1a1a1a]">Add Contractor of Record for a New Country</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1 hover:bg-[#f3f4f6] rounded-lg transition-colors"
+            aria-label="Close"
+          >
+            <svg className="w-5 h-5 text-[#6b7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <Select
+            label="Country"
+            value={country}
+            options={availableCountries}
+            onChange={setCountry}
+            placeholder="Select a country"
+            required
+            searchable
+            error={!!modalErrors.country}
+            errorMessage={modalErrors.country}
           />
           <InputText
-            label="Milestone Contractors"
-            value={countryRequest.contractorInfo.numberOfMilestoneContractors}
-            onChange={(v) => onContractorChange('numberOfMilestoneContractors', v)}
+            label="Number of monthly/hourly contractors"
+            value={numberOfMonthlyHourlyContractors}
+            onChange={setNumberOfMonthlyHourlyContractors}
+            placeholder="Enter value"
+            required
+            error={!!modalErrors.numberOfMonthlyHourlyContractors}
+            errorMessage={modalErrors.numberOfMonthlyHourlyContractors}
           />
           <InputText
-            label="Avg Monthly Pay (USD)"
-            value={countryRequest.contractorInfo.avgMonthlyPayUsd}
-            onChange={(v) => onContractorChange('avgMonthlyPayUsd', v)}
-            placeholder="Optional"
+            label="Number of milestone contractors"
+            value={numberOfMilestoneContractors}
+            onChange={setNumberOfMilestoneContractors}
+            placeholder="Enter value"
+            required
+            error={!!modalErrors.numberOfMilestoneContractors}
+            errorMessage={modalErrors.numberOfMilestoneContractors}
           />
           <InputText
-            label="Avg Milestone Amount (USD)"
-            value={countryRequest.contractorInfo.avgMilestoneAmountUsd}
-            onChange={(v) => onContractorChange('avgMilestoneAmountUsd', v)}
-            placeholder="Optional"
+            label="Average monthly pay in USD"
+            value={avgMonthlyPayUsd}
+            onChange={setAvgMonthlyPayUsd}
+            placeholder="Enter value"
+            prefix="USD $"
           />
+          <InputText
+            label="Average milestone amount in USD"
+            value={avgMilestoneAmountUsd}
+            onChange={setAvgMilestoneAmountUsd}
+            placeholder="Enter value"
+            prefix="USD $"
+          />
+        </div>
+
+        <div className="flex justify-end pt-2">
+          <Button appearance="primary" size="md" onClick={handleAdd}>
+            Add
+          </Button>
         </div>
       </div>
     </div>
