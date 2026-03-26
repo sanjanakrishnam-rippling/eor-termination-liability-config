@@ -111,7 +111,6 @@ export default function UnderwritingFormView() {
     removeCorEntry,
     setBankStatements,
     setOtherFinancialDocs,
-    setCensusFile,
     setAdditionalConsiderations,
     validate,
     setIsSubmitting,
