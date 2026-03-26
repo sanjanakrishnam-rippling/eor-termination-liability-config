@@ -5,6 +5,7 @@ export type RequestType = 'zero-deposit' | 'partial-role' | 'partial-company';
 export type ProductType = 'eor' | 'cor' | 'both';
 
 export interface Address {
+  country: string;
   street: string;
   city: string;
   state: string;
@@ -14,6 +15,7 @@ export interface Address {
 export interface IntakeInfo {
   firstName: string;
   lastName: string;
+  role: string;
   companyLegalName: string;
   workEmail: string;
   phoneCountryCode: string;
@@ -24,6 +26,8 @@ export interface IntakeData {
   accountType: AccountType | '';
   info: IntakeInfo;
 }
+
+export type WorkforceReason = 'first_time' | 'moving_existing' | 'adjust_deposit';
 
 export interface CompanyInfo {
   companyAddress: Address;
@@ -62,6 +66,8 @@ export interface FinancialDetails {
 
 export interface UnderwritingFormData {
   companyInfo: CompanyInfo;
+  workforceReason: WorkforceReason | '';
+  workforceCensusFile: File[];
   avgMonthlyPayroll: string;
   productType: ProductType | '';
   eorCountryRequests: EorCountryEntry[];
@@ -79,7 +85,7 @@ export interface SubmissionResponse {
 }
 
 export function createEmptyAddress(): Address {
-  return { street: '', city: '', state: '', zipCode: '' };
+  return { country: '', street: '', city: '', state: '', zipCode: '' };
 }
 
 export function createEmptyCompanyInfo(): CompanyInfo {
@@ -120,6 +126,8 @@ export function createEmptyCorEntry(id: string): CorCountryEntry {
 export function createEmptyFormData(): UnderwritingFormData {
   return {
     companyInfo: createEmptyCompanyInfo(),
+    workforceReason: '',
+    workforceCensusFile: [],
     avgMonthlyPayroll: '',
     productType: '',
     eorCountryRequests: [],

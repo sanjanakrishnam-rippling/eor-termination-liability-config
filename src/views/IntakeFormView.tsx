@@ -1,16 +1,23 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { AccountType, IntakeInfo } from '../types/underwriting';
+import type { IntakeInfo } from '../types/underwriting';
 
 import FormSection from '../components/FormSection';
 import InputText from '../components/InputText';
-import RadioButton, { useRadioGroup } from '../components/RadioButton';
+import Select from '../components/Select';
 import Button from '../components/Button';
 
+const ROLE_OPTIONS = [
+  { id: 'ceo_owner', label: 'CEO/Owner' },
+  { id: 'finance_leader', label: 'Finance Leader' },
+  { id: 'hr_leader', label: 'HR Leader' },
+  { id: 'other', label: 'Other' },
+];
+
 interface IntakeErrors {
-  accountType?: string;
   firstName?: string;
   lastName?: string;
+  role?: string;
   companyLegalName?: string;
   workEmail?: string;
   phoneNumber?: string;
@@ -44,10 +51,10 @@ function isEmailValid(email: string): boolean {
 }
 
 export default function IntakeFormView() {
-  const [accountType, setAccountType] = useState<AccountType | ''>('');
   const [info, setInfo] = useState<IntakeInfo>({
     firstName: '',
     lastName: '',
+    role: '',
     companyLegalName: '',
     workEmail: '',
     phoneCountryCode: '+1',
@@ -57,13 +64,6 @@ export default function IntakeFormView() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const accountRadio = useRadioGroup(accountType);
-
-  const handleAccountSelect = (value: string) => {
-    accountRadio.handleSelect(value);
-    setAccountType(value as AccountType);
-  };
-
   const updateField = <K extends keyof IntakeInfo>(field: K, value: IntakeInfo[K]) => {
     setInfo((prev) => ({ ...prev, [field]: value }));
   };
@@ -71,9 +71,9 @@ export default function IntakeFormView() {
   const validate = (): boolean => {
     const errs: IntakeErrors = {};
 
-    if (!accountType) errs.accountType = 'Please select your account type';
     if (!info.firstName.trim()) errs.firstName = 'First name is required';
     if (!info.lastName.trim()) errs.lastName = 'Last name is required';
+    if (!info.role) errs.role = 'Please select your role';
     if (!info.companyLegalName.trim()) errs.companyLegalName = 'Company legal name is required';
     if (!info.workEmail.trim()) {
       errs.workEmail = 'Work email is required';
@@ -98,7 +98,7 @@ export default function IntakeFormView() {
 
     setIsSubmitting(true);
 
-    const intakeData = { accountType, info };
+    const intakeData = { info };
     localStorage.setItem('underwriting_intake', JSON.stringify(intakeData));
 
     await new Promise((r) => setTimeout(r, 800));
@@ -117,7 +117,7 @@ export default function IntakeFormView() {
             Enter your info and verify your email to start your underwriting application.
             If you have already filled out this form, you can{' '}
             <a
-              href="/apply/form"
+              href="/apply/continue"
               className="font-semibold text-[#1e4aa9] no-underline hover:text-[#152d4a] transition-colors"
             >
               continue with your application
@@ -133,41 +133,6 @@ export default function IntakeFormView() {
           }}
           className="flex flex-col gap-10"
         >
-          <FormSection
-            title="Your Rippling Account"
-            description="Are you an existing Rippling customer or a prospect?"
-          >
-            <div id="field-accountType" className="flex flex-col gap-2">
-              <RadioButton
-                id="account-existing"
-                value="existing_customer"
-                label="Existing Rippling Customer"
-                isSelected={accountType === 'existing_customer'}
-                isFocused={accountRadio.focusedId === 'account-existing'}
-                onSelect={handleAccountSelect}
-                onFocus={accountRadio.handleFocus}
-                onBlur={accountRadio.handleBlur}
-                onMouseEnter={accountRadio.handleMouseEnter}
-                onMouseLeave={accountRadio.handleMouseLeave}
-              />
-              <RadioButton
-                id="account-prospect"
-                value="prospect"
-                label="Prospect"
-                isSelected={accountType === 'prospect'}
-                isFocused={accountRadio.focusedId === 'account-prospect'}
-                onSelect={handleAccountSelect}
-                onFocus={accountRadio.handleFocus}
-                onBlur={accountRadio.handleBlur}
-                onMouseEnter={accountRadio.handleMouseEnter}
-                onMouseLeave={accountRadio.handleMouseLeave}
-              />
-              {errors.accountType && (
-                <p className="text-[#c3402c] text-[12px] leading-[16px]">{errors.accountType}</p>
-              )}
-            </div>
-          </FormSection>
-
           <FormSection title="Basic Information">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div id="field-firstName">
@@ -199,6 +164,17 @@ export default function IntakeFormView() {
                 required
                 error={!!errors.companyLegalName}
                 errorMessage={errors.companyLegalName}
+              />
+            </div>
+            <div id="field-role">
+              <Select
+                label="Your role"
+                value={info.role}
+                options={ROLE_OPTIONS}
+                onChange={(v) => updateField('role', v)}
+                required
+                error={!!errors.role}
+                errorMessage={errors.role}
               />
             </div>
             <div id="field-workEmail">

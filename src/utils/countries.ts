@@ -115,6 +115,19 @@ export const countries: SelectOption[] = [
   { id: 'ZW', label: 'Zimbabwe' },
 ];
 
+export const EOR_SUPPORTED_COUNTRY_IDS = new Set([
+  'AU', 'AT', 'BE', 'BR', 'BG', 'CA', 'CL', 'CO', 'HR', 'CZ',
+  'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HK', 'HU', 'IN', 'ID',
+  'IE', 'IL', 'IT', 'JP', 'KE', 'KR', 'LV', 'LT', 'LU', 'MY',
+  'MT', 'MX', 'NL', 'NZ', 'NG', 'NO', 'PH', 'PL', 'PT', 'RO',
+  'SG', 'SK', 'SI', 'ZA', 'ES', 'SE', 'CH', 'TW', 'TH', 'GB',
+  'AE', 'VN',
+]);
+
+export function isEorSupported(countryId: string): boolean {
+  return EOR_SUPPORTED_COUNTRY_IDS.has(countryId);
+}
+
 export function getCountryLabel(id: string): string {
   return countries.find((c) => c.id === id)?.label ?? id;
 }

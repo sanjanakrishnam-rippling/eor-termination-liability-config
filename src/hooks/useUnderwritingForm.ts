@@ -6,6 +6,7 @@ import {
   type CorCountryEntry,
   type CompanyInfo,
   type Address,
+  type WorkforceReason,
   createEmptyFormData,
 } from '../types/underwriting';
 
@@ -13,6 +14,7 @@ function validateForm(data: UnderwritingFormData): FormValidationErrors {
   const errors: FormValidationErrors = {};
 
   const addr = data.companyInfo.companyAddress;
+  if (!addr.country) errors.companyCountry = 'Country is required';
   if (!addr.street.trim()) errors.companyStreet = 'Street is required';
   if (!addr.city.trim()) errors.companyCity = 'City is required';
   if (!addr.state.trim()) errors.companyState = 'State is required';
@@ -26,6 +28,10 @@ function validateForm(data: UnderwritingFormData): FormValidationErrors {
     errors.companyEntityType = 'Company entity type is required';
   }
 
+  if (data.companyInfo.companyEntityType === 'sole_proprietorship') {
+    errors.companyEntityType = 'Rippling does not currently support sole proprietorships for EOR services.';
+  }
+
   if (!data.companyInfo.industry) {
     errors.industry = 'Industry is required';
   }
@@ -36,6 +42,10 @@ function validateForm(data: UnderwritingFormData): FormValidationErrors {
 
   if (!data.companyInfo.companyTaxId.trim()) {
     errors.companyTaxId = 'Company tax ID is required';
+  }
+
+  if (!data.workforceReason) {
+    errors.workforceReason = 'Please select your workforce situation';
   }
 
   if (!data.avgMonthlyPayroll.trim()) {
@@ -104,6 +114,8 @@ export interface UseUnderwritingFormReturn {
   setCompanyAddress: (field: keyof Address, value: string) => void;
   setIncorporatedAddress: (field: keyof Address, value: string) => void;
   setAvgMonthlyPayroll: (value: string) => void;
+  setWorkforceReason: (value: WorkforceReason | '') => void;
+  setWorkforceCensusFile: (files: File[]) => void;
   setProductType: (value: UnderwritingFormData['productType']) => void;
   addEorEntry: (entry: EorCountryEntry) => void;
   removeEorEntry: (id: string) => void;
@@ -155,6 +167,18 @@ export function useUnderwritingForm(): UseUnderwritingFormReturn {
 
   const setAvgMonthlyPayroll = useCallback((value: string) => {
     setFormData((prev) => ({ ...prev, avgMonthlyPayroll: value }));
+  }, []);
+
+  const setWorkforceReason = useCallback((value: WorkforceReason | '') => {
+    setFormData((prev) => ({
+      ...prev,
+      workforceReason: value,
+      workforceCensusFile: value === 'moving_existing' ? prev.workforceCensusFile : [],
+    }));
+  }, []);
+
+  const setWorkforceCensusFile = useCallback((files: File[]) => {
+    setFormData((prev) => ({ ...prev, workforceCensusFile: files }));
   }, []);
 
   const setProductType = useCallback(
@@ -235,6 +259,8 @@ export function useUnderwritingForm(): UseUnderwritingFormReturn {
     setCompanyAddress,
     setIncorporatedAddress,
     setAvgMonthlyPayroll,
+    setWorkforceReason,
+    setWorkforceCensusFile,
     setProductType,
     addEorEntry,
     removeEorEntry,

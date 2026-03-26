@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUnderwritingForm } from '../hooks/useUnderwritingForm';
 import { submitUnderwritingApplication } from '../utils/api';
-import { countries } from '../utils/countries';
+import { countries, isEorSupported } from '../utils/countries';
 import { v4 as uuidv4 } from 'uuid';
 
 import InputText from '../components/InputText';
@@ -10,9 +10,16 @@ import Select from '../components/Select';
 import FileUpload from '../components/FileUpload';
 import TextArea from '../components/TextArea';
 import Button from '../components/Button';
+import AlertBanner from '../components/AlertBanner';
 
-import type { EorCountryEntry, CorCountryEntry } from '../types/underwriting';
+import type { EorCountryEntry, CorCountryEntry, WorkforceReason } from '../types/underwriting';
 import type { SelectOption } from '../components/Select';
+
+const WORKFORCE_REASON_OPTIONS = [
+  { id: 'first_time', label: 'Setting up workforce for the first time' },
+  { id: 'moving_existing', label: 'Moving existing workforce from another provider' },
+  { id: 'adjust_deposit', label: 'Existing Rippling EOR/COR customer seeking to adjust deposit' },
+];
 
 const PRODUCT_TYPE_OPTIONS = [
   { id: 'eor', label: 'Employer of Record Request' },
@@ -95,6 +102,8 @@ export default function UnderwritingFormView() {
     setCompanyAddress,
     setIncorporatedAddress,
     setAvgMonthlyPayroll,
+    setWorkforceReason,
+    setWorkforceCensusFile,
     setProductType,
     addEorEntry,
     removeEorEntry,
@@ -194,6 +203,18 @@ export default function UnderwritingFormView() {
                   <p className="font-semibold text-[14px] text-[#1a1a1a] tracking-[0.1px]">
                     Company address
                   </p>
+                  <div id="field-companyCountry">
+                    <Select
+                      label="Country"
+                      value={formData.companyInfo.companyAddress.country}
+                      options={countries}
+                      onChange={(v) => setCompanyAddress('country', v)}
+                      required
+                      searchable
+                      error={!!errors.companyCountry}
+                      errorMessage={errors.companyCountry}
+                    />
+                  </div>
                   <div id="field-companyStreet">
                     <InputText
                       label="Street"
@@ -254,6 +275,13 @@ export default function UnderwritingFormView() {
                       </div>
                     </div>
                   </div>
+                  <Select
+                    label="Country"
+                    value={formData.companyInfo.incorporatedAddress.country}
+                    options={countries}
+                    onChange={(v) => setIncorporatedAddress('country', v)}
+                    searchable
+                  />
                   <InputText
                     label="Street"
                     value={formData.companyInfo.incorporatedAddress.street}
@@ -331,6 +359,13 @@ export default function UnderwritingFormView() {
                   />
                 </div>
 
+                {formData.companyInfo.companyEntityType === 'sole_proprietorship' && (
+                  <AlertBanner
+                    variant="error"
+                    message="Rippling does not currently support sole proprietorships for EOR services."
+                  />
+                )}
+
                 <div id="field-industry">
                   <Select
                     label="What industry does your company operate in?"
@@ -395,6 +430,18 @@ export default function UnderwritingFormView() {
                   </p>
                 </div>
 
+                <div id="field-workforceReason">
+                  <Select
+                    label="How can we help you?"
+                    value={formData.workforceReason}
+                    options={WORKFORCE_REASON_OPTIONS}
+                    onChange={(v) => setWorkforceReason(v as WorkforceReason)}
+                    required
+                    error={!!errors.workforceReason}
+                    errorMessage={errors.workforceReason}
+                  />
+                </div>
+
                 <div id="field-productType">
                   <Select
                     label="Product Type"
@@ -407,13 +454,25 @@ export default function UnderwritingFormView() {
                   />
                 </div>
 
-                {formData.productType && (
+                {formData.workforceReason === 'moving_existing' && formData.productType && (
+                  <div id="field-workforceCensusFile">
+                    <FileUpload
+                      label="Workforce Census File"
+                      files={formData.workforceCensusFile}
+                      onFilesChange={setWorkforceCensusFile}
+                      helpText="Upload a census file (CSV/XLSX) of the workforce you are moving from another provider."
+                      accept=".csv,.xlsx,.xls"
+                    />
+                  </div>
+                )}
+
+                {formData.productType && formData.workforceReason !== 'moving_existing' && (
                   <>
                     {/* Company Payroll */}
                     <div className="flex flex-col gap-3 border border-[#e5e7eb] rounded-lg p-5">
                       <p className="text-[14px] leading-[20px] text-[#1a1a1a]">
                         <span className="font-semibold">Company Payroll:</span>{' '}
-                        Enter the total payroll for the company, including EOR EEs, non-EOR EEs and contractors.
+                        Enter the total payroll for the company, including EOR employees, non-EOR employees and contractors.
                       </p>
                       <div id="field-avgMonthlyPayroll">
                         <InputText
@@ -434,7 +493,7 @@ export default function UnderwritingFormView() {
                       <div id="field-eorCountryRequests" className="flex flex-col gap-4">
                         <div className="border border-[#e5e7eb] rounded-lg p-5 flex flex-col gap-4">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-[16px] font-bold text-[#1a1a1a]">EOR EE Details</h3>
+                            <h3 className="text-[16px] font-bold text-[#1a1a1a]">EOR Employee Details</h3>
                             <Button
                               appearance="primary"
                               size="sm"
@@ -524,26 +583,15 @@ export default function UnderwritingFormView() {
                 </div>
                 <div id="field-otherFinancialDocs">
                   <FileUpload
-                    label="Other Financial Information"
+                    label="Financial Statements"
                     files={formData.financialDetails.otherFinancialDocs}
                     onFilesChange={setOtherFinancialDocs}
                     required={isOtherFinancialRequired}
-                    helpText={
-                      isOtherFinancialRequired
-                        ? 'Required: Past 2 years of financial statements (audited or CPA-prepared income statement, balance sheet, & statement of cash-flows) and documentation showing terms for bank line of credit & current balance.'
-                        : 'Past 2 years of financial statements, credit line documentation. Required if monthly EOR is > $500k.'
-                    }
+                    helpText="Past 2 years of financial statements: audited or CPA-prepared income statement, balance sheet, & statement of cash-flows. Required if adding > 5 workers or total annual worker cost expected > $500K."
                     error={!!errors.otherFinancialDocs}
                     errorMessage={errors.otherFinancialDocs}
                   />
                 </div>
-                <FileUpload
-                  label="Census File"
-                  files={formData.financialDetails.censusFile}
-                  onFilesChange={setCensusFile}
-                  helpText="If moving workers from another provider, attach an export (CSV/XLSX) of their census."
-                  accept=".csv,.xlsx,.xls"
-                />
 
                 <div className="border-t border-[#e5e7eb] pt-5 mt-2">
                   <div className="flex flex-col gap-1 mb-4">
@@ -793,9 +841,12 @@ function AddEorModal({
   const [avgEoyBonusUsd, setAvgEoyBonusUsd] = useState('');
   const [modalErrors, setModalErrors] = useState<Record<string, string>>({});
 
+  const countryUnsupported = country !== '' && !isEorSupported(country);
+
   const handleAdd = () => {
     const errs: Record<string, string> = {};
     if (!country) errs.country = 'Country is required';
+    if (countryUnsupported) errs.country = 'EOR is not currently supported in this country';
     if (!numberOfEmployees.trim()) errs.numberOfEmployees = 'Number of employees is required';
     if (!avgMonthlySalaryUsd.trim()) errs.avgMonthlySalaryUsd = 'Average monthly salary is required';
 
@@ -843,39 +894,51 @@ function AddEorModal({
             error={!!modalErrors.country}
             errorMessage={modalErrors.country}
           />
-          <InputText
-            label="Number of employees"
-            value={numberOfEmployees}
-            onChange={setNumberOfEmployees}
-            placeholder="0"
-            required
-            error={!!modalErrors.numberOfEmployees}
-            errorMessage={modalErrors.numberOfEmployees}
-          />
-          <InputText
-            label="Average monthly salary in USD"
-            value={avgMonthlySalaryUsd}
-            onChange={setAvgMonthlySalaryUsd}
-            placeholder="0"
-            prefix="USD $"
-            required
-            error={!!modalErrors.avgMonthlySalaryUsd}
-            errorMessage={modalErrors.avgMonthlySalaryUsd}
-          />
-          <InputText
-            label="Average employee EoY bonus in USD"
-            value={avgEoyBonusUsd}
-            onChange={setAvgEoyBonusUsd}
-            placeholder="0"
-            prefix="USD $"
-          />
+          {countryUnsupported && (
+            <AlertBanner
+              variant="error"
+              message="EOR is not currently supported in this country."
+            />
+          )}
+          {!countryUnsupported && (
+            <>
+              <InputText
+                label="Number of employees"
+                value={numberOfEmployees}
+                onChange={setNumberOfEmployees}
+                placeholder="0"
+                required
+                error={!!modalErrors.numberOfEmployees}
+                errorMessage={modalErrors.numberOfEmployees}
+              />
+              <InputText
+                label="Average monthly salary in USD"
+                value={avgMonthlySalaryUsd}
+                onChange={setAvgMonthlySalaryUsd}
+                placeholder="0"
+                prefix="USD $"
+                required
+                error={!!modalErrors.avgMonthlySalaryUsd}
+                errorMessage={modalErrors.avgMonthlySalaryUsd}
+              />
+              <InputText
+                label="Average employee EoY bonus in USD"
+                value={avgEoyBonusUsd}
+                onChange={setAvgEoyBonusUsd}
+                placeholder="0"
+                prefix="USD $"
+              />
+            </>
+          )}
         </div>
 
-        <div className="flex justify-end pt-2">
-          <Button appearance="primary" size="md" onClick={handleAdd}>
-            Add
-          </Button>
-        </div>
+        {!countryUnsupported && (
+          <div className="flex justify-end pt-2">
+            <Button appearance="primary" size="md" onClick={handleAdd}>
+              Add
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
