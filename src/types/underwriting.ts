@@ -72,6 +72,7 @@ export interface UnderwritingFormData {
   productType: ProductType | '';
   eorCountryRequests: EorCountryEntry[];
   corCountryRequests: CorCountryEntry[];
+  waiveDepositForFee: boolean;
   financialDetails: FinancialDetails;
   additionalConsiderations: string;
 }
@@ -132,6 +133,7 @@ export function createEmptyFormData(): UnderwritingFormData {
     productType: '',
     eorCountryRequests: [],
     corCountryRequests: [],
+    waiveDepositForFee: false,
     financialDetails: {
       bankStatements: [],
       otherFinancialDocs: [],

@@ -121,6 +121,7 @@ export interface UseUnderwritingFormReturn {
   removeEorEntry: (id: string) => void;
   addCorEntry: (entry: CorCountryEntry) => void;
   removeCorEntry: (id: string) => void;
+  setWaiveDepositForFee: (value: boolean) => void;
   setBankStatements: (files: File[]) => void;
   setOtherFinancialDocs: (files: File[]) => void;
   setCensusFile: (files: File[]) => void;
@@ -216,6 +217,10 @@ export function useUnderwritingForm(): UseUnderwritingFormReturn {
     }));
   }, []);
 
+  const setWaiveDepositForFee = useCallback((value: boolean) => {
+    setFormData((prev) => ({ ...prev, waiveDepositForFee: value }));
+  }, []);
+
   const setBankStatements = useCallback((files: File[]) => {
     setFormData((prev) => ({
       ...prev,
@@ -266,6 +271,7 @@ export function useUnderwritingForm(): UseUnderwritingFormReturn {
     removeEorEntry,
     addCorEntry,
     removeCorEntry,
+    setWaiveDepositForFee,
     setBankStatements,
     setOtherFinancialDocs,
     setCensusFile,

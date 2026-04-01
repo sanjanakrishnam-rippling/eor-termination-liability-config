@@ -104,6 +104,7 @@ export default function UnderwritingFormView() {
     setWorkforceReason,
     setWorkforceCensusFile,
     setProductType,
+    setWaiveDepositForFee,
     addEorEntry,
     removeEorEntry,
     addCorEntry,
@@ -559,6 +560,20 @@ export default function UnderwritingFormView() {
                     )}
                   </>
                 )}
+
+                <div className="border border-[#e5e7eb] rounded-lg p-5">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.waiveDepositForFee}
+                      onChange={(e) => setWaiveDepositForFee(e.target.checked)}
+                      className="mt-0.5 h-5 w-5 rounded border-[#d5d5d5] text-[#4a6ba6] focus:ring-[#4a6ba6] cursor-pointer accent-[#4a6ba6]"
+                    />
+                    <span className="text-[14px] leading-[20px] text-[#1a1a1a]">
+                      Would you like to be considered for waiving deposit requirements for a monthly fee per person?
+                    </span>
+                  </label>
+                </div>
 
                 {/* Step 2 Footer */}
                 <StepFooter
