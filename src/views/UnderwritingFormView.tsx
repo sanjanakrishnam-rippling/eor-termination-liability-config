@@ -467,12 +467,16 @@ export default function UnderwritingFormView() {
 
                 {formData.productType && formData.workforceReason === 'first_time' && (
                   <>
+                    <AlertBanner
+                      variant="info"
+                      message="Upload a workforce census file (CSV/XLSX) if you have one. Otherwise, fill in the employee and contractor details below."
+                    />
+
                     <div id="field-workforceCensusFile">
                       <FileUpload
                         label="Workforce Census File (optional)"
                         files={formData.workforceCensusFile}
                         onFilesChange={setWorkforceCensusFile}
-                        helpText="Upload a census file (CSV/XLSX) if you have one. Otherwise, fill in the details below."
                         accept=".csv,.xlsx,.xls"
                       />
                     </div>
@@ -561,17 +565,30 @@ export default function UnderwritingFormView() {
                   </>
                 )}
 
-                <div className="border border-[#e5e7eb] rounded-lg p-5">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.waiveDepositForFee}
-                      onChange={(e) => setWaiveDepositForFee(e.target.checked)}
-                      className="mt-0.5 h-5 w-5 rounded border-[#d5d5d5] text-[#4a6ba6] focus:ring-[#4a6ba6] cursor-pointer accent-[#4a6ba6]"
-                    />
-                    <span className="text-[14px] leading-[20px] text-[#1a1a1a]">
-                      Would you like to be considered for waiving deposit requirements for a monthly fee per person?
-                    </span>
+                <div
+                  onClick={() => setWaiveDepositForFee(!formData.waiveDepositForFee)}
+                  className={`rounded-lg p-5 cursor-pointer transition-all duration-200 border ${
+                    formData.waiveDepositForFee
+                      ? 'border-[#4a6ba6] bg-[#f0f4fa]'
+                      : 'border-[#e5e7eb] bg-white hover:border-[#c0cde0]'
+                  }`}
+                >
+                  <label className="flex items-center gap-4 cursor-pointer">
+                    <div className={`w-10 h-[22px] rounded-full p-[2px] transition-all duration-200 shrink-0 ${
+                      formData.waiveDepositForFee ? 'bg-[#4a6ba6]' : 'bg-[#d5d5d5]'
+                    }`}>
+                      <div className={`w-[18px] h-[18px] rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                        formData.waiveDepositForFee ? 'translate-x-[18px]' : 'translate-x-0'
+                      }`} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[14px] leading-[20px] font-semibold text-[#1a1a1a]">
+                        Waive deposit requirements
+                      </span>
+                      <span className="text-[13px] leading-[18px] text-[#6b7280]">
+                        Would you like to be considered for waiving deposit requirements for a monthly fee per person?
+                      </span>
+                    </div>
                   </label>
                 </div>
 
