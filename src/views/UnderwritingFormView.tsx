@@ -120,6 +120,7 @@ export default function UnderwritingFormView() {
   const [saveMessage, setSaveMessage] = useState('');
   const [eorModalOpen, setEorModalOpen] = useState(false);
   const [corModalOpen, setCorModalOpen] = useState(false);
+  const [noCensusFile, setNoCensusFile] = useState(false);
 
   const handleSave = () => {
     const saved = { formData };
@@ -454,113 +455,111 @@ export default function UnderwritingFormView() {
                 </div>
 
                 {formData.productType && formData.workforceReason === 'moving_existing' && (
-                  <div id="field-workforceCensusFile">
-                    <FileUpload
-                      label="Workforce Census File"
-                      files={formData.workforceCensusFile}
-                      onFilesChange={setWorkforceCensusFile}
-                      helpText="Upload a census file (CSV/XLSX) of the workforce you are moving from another provider."
-                      accept=".csv,.xlsx,.xls"
-                    />
-                  </div>
+                  <>
+                    {!noCensusFile && (
+                      <div id="field-workforceCensusFile">
+                        <FileUpload
+                          label="Workforce Census File"
+                          files={formData.workforceCensusFile}
+                          onFilesChange={setWorkforceCensusFile}
+                          helpText="Upload a census file (CSV/XLSX) of the workforce you are moving from another provider."
+                          accept=".csv,.xlsx,.xls"
+                        />
+                      </div>
+                    )}
+
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={noCensusFile}
+                        onChange={(e) => {
+                          setNoCensusFile(e.target.checked);
+                          if (e.target.checked) setWorkforceCensusFile([]);
+                        }}
+                        className="h-4 w-4 rounded border-[#d5d5d5] accent-[#4a6ba6] cursor-pointer"
+                      />
+                      <span className="text-[14px] leading-[20px] text-[#1a1a1a]">
+                        I don't have a census file
+                      </span>
+                    </label>
+                  </>
                 )}
 
-                {formData.productType && formData.workforceReason === 'first_time' && (
+                {formData.productType && (formData.workforceReason === 'first_time' || (formData.workforceReason === 'moving_existing' && noCensusFile)) && (
                   <>
-                    <AlertBanner
-                      variant="info"
-                      message="Upload a workforce census file (CSV/XLSX) if you have one. Otherwise, fill in the employee and contractor details below."
-                    />
-
-                    <div id="field-workforceCensusFile">
-                      <FileUpload
-                        label="Workforce Census File (optional)"
-                        files={formData.workforceCensusFile}
-                        onFilesChange={setWorkforceCensusFile}
-                        accept=".csv,.xlsx,.xls"
-                      />
+                    <div className="flex flex-col gap-3 border border-[#e5e7eb] rounded-lg p-5">
+                      <p className="text-[14px] leading-[20px] text-[#1a1a1a]">
+                        <span className="font-semibold">Company Payroll:</span>{' '}
+                        Enter the total payroll for the company, including EOR employees, non-EOR employees and contractors.
+                      </p>
+                      <div id="field-avgMonthlyPayroll">
+                        <InputText
+                          label="1 Month of Payroll in USD (Avg)"
+                          value={formData.avgMonthlyPayroll}
+                          onChange={setAvgMonthlyPayroll}
+                          placeholder="0"
+                          prefix="USD $"
+                          required
+                          error={!!errors.avgMonthlyPayroll}
+                          errorMessage={errors.avgMonthlyPayroll}
+                        />
+                      </div>
                     </div>
 
-                    {formData.workforceCensusFile.length === 0 && (
-                      <>
-                        {/* Company Payroll */}
-                        <div className="flex flex-col gap-3 border border-[#e5e7eb] rounded-lg p-5">
-                          <p className="text-[14px] leading-[20px] text-[#1a1a1a]">
-                            <span className="font-semibold">Company Payroll:</span>{' '}
-                            Enter the total payroll for the company, including EOR employees, non-EOR employees and contractors.
-                          </p>
-                          <div id="field-avgMonthlyPayroll">
-                            <InputText
-                              label="1 Month of Payroll in USD (Avg)"
-                              value={formData.avgMonthlyPayroll}
-                              onChange={setAvgMonthlyPayroll}
-                              placeholder="0"
-                              prefix="USD $"
-                              required
-                              error={!!errors.avgMonthlyPayroll}
-                              errorMessage={errors.avgMonthlyPayroll}
-                            />
+                    {showEor && (
+                      <div id="field-eorCountryRequests" className="flex flex-col gap-4">
+                        <div className="border border-[#e5e7eb] rounded-lg p-5 flex flex-col gap-4">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-[16px] font-bold text-[#1a1a1a]">Employer of Record Details</h3>
+                            <Button
+                              appearance="primary"
+                              size="sm"
+                              onClick={() => setEorModalOpen(true)}
+                            >
+                              + Add Country
+                            </Button>
                           </div>
+
+                          {errors.eorCountryRequests && formData.eorCountryRequests.length === 0 && (
+                            <p className="text-[#c3402c] text-[12px] leading-[16px]">
+                              {errors.eorCountryRequests}
+                            </p>
+                          )}
+
+                          <EorTable
+                            entries={formData.eorCountryRequests}
+                            onRemove={removeEorEntry}
+                          />
                         </div>
+                      </div>
+                    )}
 
-                        {/* EOR Section */}
-                        {showEor && (
-                          <div id="field-eorCountryRequests" className="flex flex-col gap-4">
-                            <div className="border border-[#e5e7eb] rounded-lg p-5 flex flex-col gap-4">
-                              <div className="flex items-center justify-between">
-                                <h3 className="text-[16px] font-bold text-[#1a1a1a]">Employer of Record Details</h3>
-                                <Button
-                                  appearance="primary"
-                                  size="sm"
-                                  onClick={() => setEorModalOpen(true)}
-                                >
-                                  + Add Country
-                                </Button>
-                              </div>
-
-                              {errors.eorCountryRequests && formData.eorCountryRequests.length === 0 && (
-                                <p className="text-[#c3402c] text-[12px] leading-[16px]">
-                                  {errors.eorCountryRequests}
-                                </p>
-                              )}
-
-                              <EorTable
-                                entries={formData.eorCountryRequests}
-                                onRemove={removeEorEntry}
-                              />
-                            </div>
+                    {showCor && (
+                      <div id="field-corCountryRequests" className="flex flex-col gap-4">
+                        <div className="border border-[#e5e7eb] rounded-lg p-5 flex flex-col gap-4">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-[16px] font-bold text-[#1a1a1a]">Contractor of Record Details</h3>
+                            <Button
+                              appearance="primary"
+                              size="sm"
+                              onClick={() => setCorModalOpen(true)}
+                            >
+                              + Add Country
+                            </Button>
                           </div>
-                        )}
 
-                        {/* COR Section */}
-                        {showCor && (
-                          <div id="field-corCountryRequests" className="flex flex-col gap-4">
-                            <div className="border border-[#e5e7eb] rounded-lg p-5 flex flex-col gap-4">
-                              <div className="flex items-center justify-between">
-                                <h3 className="text-[16px] font-bold text-[#1a1a1a]">Contractor of Record Details</h3>
-                                <Button
-                                  appearance="primary"
-                                  size="sm"
-                                  onClick={() => setCorModalOpen(true)}
-                                >
-                                  + Add Country
-                                </Button>
-                              </div>
+                          {errors.corCountryRequests && formData.corCountryRequests.length === 0 && (
+                            <p className="text-[#c3402c] text-[12px] leading-[16px]">
+                              {errors.corCountryRequests}
+                            </p>
+                          )}
 
-                              {errors.corCountryRequests && formData.corCountryRequests.length === 0 && (
-                                <p className="text-[#c3402c] text-[12px] leading-[16px]">
-                                  {errors.corCountryRequests}
-                                </p>
-                              )}
-
-                              <CorTable
-                                entries={formData.corCountryRequests}
-                                onRemove={removeCorEntry}
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </>
+                          <CorTable
+                            entries={formData.corCountryRequests}
+                            onRemove={removeCorEntry}
+                          />
+                        </div>
+                      </div>
                     )}
                   </>
                 )}
@@ -583,10 +582,10 @@ export default function UnderwritingFormView() {
                     </div>
                     <div className="flex flex-col gap-1">
                       <span className="text-[14px] leading-[20px] font-semibold text-[#1a1a1a]">
-                        Waive deposit requirements
+                        Waive Deposits
                       </span>
                       <span className="text-[13px] leading-[18px] text-[#6b7280]">
-                        Would you like to be considered for waiving deposit requirements for a monthly fee per person?
+                        Interested in being considered for a deposit waiver up to $150 per employee/month?
                       </span>
                     </div>
                   </label>
