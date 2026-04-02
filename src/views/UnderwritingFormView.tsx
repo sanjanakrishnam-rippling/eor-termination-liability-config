@@ -456,17 +456,16 @@ export default function UnderwritingFormView() {
 
                 {formData.productType && formData.workforceReason === 'moving_existing' && (
                   <>
-                    {!noCensusFile && (
-                      <div id="field-workforceCensusFile">
-                        <FileUpload
-                          label="Workforce Census File"
-                          files={formData.workforceCensusFile}
-                          onFilesChange={setWorkforceCensusFile}
-                          helpText="Upload a census file (CSV/XLSX) of the workforce you are moving from another provider."
-                          accept=".csv,.xlsx,.xls"
-                        />
-                      </div>
-                    )}
+                    <div id="field-workforceCensusFile">
+                      <FileUpload
+                        label="Workforce Census File"
+                        files={formData.workforceCensusFile}
+                        onFilesChange={setWorkforceCensusFile}
+                        helpText="Upload a census file (CSV/XLSX) of the workforce you are moving from another provider."
+                        accept=".csv,.xlsx,.xls"
+                        disabled={noCensusFile}
+                      />
+                    </div>
 
                     <label className="flex items-center gap-3 cursor-pointer">
                       <input

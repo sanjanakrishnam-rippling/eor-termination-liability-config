@@ -10,6 +10,7 @@ export interface FileUploadProps {
   accept?: string;
   multiple?: boolean;
   helpText?: string;
+  disabled?: boolean;
   className?: string;
 }
 
@@ -29,6 +30,7 @@ export default function FileUpload({
   accept,
   multiple = true,
   helpText,
+  disabled = false,
   className = '',
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -82,17 +84,21 @@ export default function FileUpload({
 
       {/* Drop zone */}
       <div
-        className={`bg-white border-2 border-dashed ${borderColor} box-border flex flex-col gap-2 items-center justify-center px-6 py-8 rounded-lg w-full cursor-pointer transition-all duration-200 hover:border-[#4a6ba6] hover:border-opacity-30`}
-        onClick={() => inputRef.current?.click()}
+        className={`border-2 border-dashed ${borderColor} box-border flex flex-col gap-2 items-center justify-center px-6 py-8 rounded-lg w-full transition-all duration-200 ${
+          disabled
+            ? 'bg-[#f5f5f5] cursor-not-allowed opacity-50'
+            : 'bg-white cursor-pointer hover:border-[#4a6ba6] hover:border-opacity-30'
+        }`}
+        onClick={() => !disabled && inputRef.current?.click()}
         onDragOver={(e) => {
           e.preventDefault();
-          setIsDragOver(true);
+          if (!disabled) setIsDragOver(true);
         }}
         onDragLeave={() => setIsDragOver(false)}
-        onDrop={handleDrop}
+        onDrop={(e) => !disabled && handleDrop(e)}
       >
         <svg
-          className="w-8 h-8 text-[#9d9d9d]"
+          className={`w-8 h-8 ${disabled ? 'text-[#c0c0c0]' : 'text-[#9d9d9d]'}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -104,8 +110,8 @@ export default function FileUpload({
             d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
           />
         </svg>
-        <p className="text-[14px] text-[#595555] text-center">
-          <span className="font-medium text-[#4a6ba6]">Click to upload</span>{' '}
+        <p className={`text-[14px] text-center ${disabled ? 'text-[#b0b0b0]' : 'text-[#595555]'}`}>
+          <span className={`font-medium ${disabled ? 'text-[#b0b0b0]' : 'text-[#4a6ba6]'}`}>Click to upload</span>{' '}
           or drag and drop
         </p>
         <input
@@ -114,6 +120,7 @@ export default function FileUpload({
           accept={accept}
           multiple={multiple}
           className="hidden"
+          disabled={disabled}
           onChange={(e) => {
             handleFiles(e.target.files);
             e.target.value = '';
