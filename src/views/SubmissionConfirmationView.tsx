@@ -1,6 +1,6 @@
 import { useSearchParams } from 'react-router-dom';
 
-type OutcomeStatus = 'pending' | 'approved' | 'declined' | 'more_info' | 'manual_review';
+type OutcomeStatus = 'pending';
 
 interface StatusConfig {
   icon: React.ReactNode;
@@ -27,64 +27,6 @@ const STATUS_CONFIGS: Record<OutcomeStatus, StatusConfig> = {
     badgeText: 'text-[#774F10]',
     dotColor: 'bg-[#FFC707]',
     message: 'Your application is currently under review. Rippling will contact you on the email provided with the final decision.',
-
-  },
-  approved: {
-    icon: (
-      <svg className="w-8 h-8 text-[#079F8F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    iconBg: 'bg-[#E0F3F1]',
-    title: 'Application Approved',
-    badgeLabel: 'Approved',
-    badgeBg: 'bg-[#C1E7E3]',
-    badgeText: 'text-[#0C4739]',
-    dotColor: 'bg-[#079F8F]',
-    message: 'Your underwriting application has been approved. Your deposit terms have been updated accordingly. You can proceed with onboarding.',
-  },
-  declined: {
-    icon: (
-      <svg className="w-8 h-8 text-[#BF0F0F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    iconBg: 'bg-[#F7E1E1]',
-    title: 'Application Declined',
-    badgeLabel: 'Declined',
-    badgeBg: 'bg-[#EFC3C3]',
-    badgeText: 'text-[#6D2828]',
-    dotColor: 'bg-[#BF0F0F]',
-    message: 'Unfortunately, your underwriting application was not approved at this time. Standard deposit terms will apply. Please contact your Account Executive for more details.',
-  },
-  more_info: {
-    icon: (
-      <svg className="w-8 h-8 text-[#4a6ba6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    iconBg: 'bg-[#E1F2F7]',
-    title: 'Additional Information Required',
-    badgeLabel: 'More Info Needed',
-    badgeBg: 'bg-[#C3E5EF]',
-    badgeText: 'text-[#1E2B47]',
-    dotColor: 'bg-[#4a6ba6]',
-    message: 'We need additional documentation to process your application. Your Account Executive will reach out with specific requests. Please respond promptly to avoid delays.',
-  },
-  manual_review: {
-    icon: (
-      <svg className="w-8 h-8 text-[#F77700]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-      </svg>
-    ),
-    iconBg: 'bg-[#FEEEDD]',
-    title: 'Under Manual Review',
-    badgeLabel: 'Manual Review',
-    badgeBg: 'bg-[#FDDDBB]',
-    badgeText: 'text-[#733B17]',
-    dotColor: 'bg-[#F77700]',
-    message: 'Your application has been escalated for manual review by our Risk team. This typically takes 2-3 business days. You will be notified once a decision is made.',
   },
 };
 

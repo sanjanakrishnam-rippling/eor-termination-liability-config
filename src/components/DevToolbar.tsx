@@ -13,10 +13,6 @@ const FLOW_LINKS: NavLink[] = [
 
 const OUTCOME_LINKS: NavLink[] = [
   { label: 'Pending', path: '/apply/confirmation?status=pending' },
-  { label: 'Approved', path: '/apply/confirmation?status=approved' },
-  { label: 'Declined', path: '/apply/confirmation?status=declined' },
-  { label: 'More Info Needed', path: '/apply/confirmation?status=more_info' },
-  { label: 'Manual Review', path: '/apply/confirmation?status=manual_review' },
 ];
 
 export default function DevToolbar() {
