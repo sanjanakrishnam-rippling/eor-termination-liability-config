@@ -113,15 +113,7 @@ export default function UnderwritingFormView() {
   } = useUnderwritingForm();
 
   const [currentStep, setCurrentStep] = useState(0);
-  const [saveMessage, setSaveMessage] = useState('');
   const [noCensusFile, setNoCensusFile] = useState(false);
-
-  const handleSave = () => {
-    const saved = { formData };
-    localStorage.setItem('underwriting_draft', JSON.stringify(saved));
-    setSaveMessage('Draft saved successfully');
-    setTimeout(() => setSaveMessage(''), 3000);
-  };
 
   const handleSubmit = async () => {
     if (!validate()) {
@@ -400,8 +392,6 @@ export default function UnderwritingFormView() {
                 {/* Step 1 Footer */}
                 <StepFooter
                   onNext={goNext}
-                  onSave={handleSave}
-                  saveMessage={saveMessage}
                 />
               </div>
             )}
@@ -474,25 +464,12 @@ export default function UnderwritingFormView() {
 
                 {formData.productType && (formData.workforceReason === 'first_time' || (formData.workforceReason === 'moving_existing' && noCensusFile)) && (
                   <>
-                    <div id="field-avgMonthlyPayroll">
-                      <InputText
-                        label="1 Month of Payroll in USD (Avg)"
-                        value={formData.avgMonthlyPayroll}
-                        onChange={setAvgMonthlyPayroll}
-                        placeholder="0"
-                        prefix="USD $"
-                        required
-                        error={!!errors.avgMonthlyPayroll}
-                        errorMessage={errors.avgMonthlyPayroll}
-                      />
-                    </div>
-
                     {showEor && showCor ? (
                       <CensusCsvUploadSection
                         title="Employer of Record & Contractor of Record Details"
                         slots={[
                           {
-                            label: 'EOR CSV template',
+                            label: 'EOR CSV',
                             templatePath: '/eor-census-template.csv',
                             fieldId: 'field-eorCensusCsv',
                             files: formData.eorCensusCsv,
@@ -501,7 +478,7 @@ export default function UnderwritingFormView() {
                             errorMessage: errors.eorCensusCsv,
                           },
                           {
-                            label: 'COR CSV template',
+                            label: 'COR CSV',
                             templatePath: '/cor-census-template.csv',
                             fieldId: 'field-corCensusCsv',
                             files: formData.corCensusCsv,
@@ -515,7 +492,7 @@ export default function UnderwritingFormView() {
                       <CensusCsvUploadSection
                         title="Employer of Record Details"
                         slots={[{
-                          label: 'EOR CSV template',
+                          label: 'EOR CSV',
                           templatePath: '/eor-census-template.csv',
                           fieldId: 'field-eorCensusCsv',
                           files: formData.eorCensusCsv,
@@ -528,7 +505,7 @@ export default function UnderwritingFormView() {
                       <CensusCsvUploadSection
                         title="Contractor of Record Details"
                         slots={[{
-                          label: 'COR CSV template',
+                          label: 'COR CSV',
                           templatePath: '/cor-census-template.csv',
                           fieldId: 'field-corCensusCsv',
                           files: formData.corCensusCsv,
@@ -572,8 +549,6 @@ export default function UnderwritingFormView() {
                 <StepFooter
                   onBack={goBack}
                   onNext={goNext}
-                  onSave={handleSave}
-                  saveMessage={saveMessage}
                 />
               </div>
             )}
@@ -632,8 +607,6 @@ export default function UnderwritingFormView() {
                 {/* Step 3 Footer */}
                 <StepFooter
                   onBack={goBack}
-                  onSave={handleSave}
-                  saveMessage={saveMessage}
                   submitLabel={isSubmitting ? 'Submitting...' : 'Submit'}
                   submitDisabled={isSubmitting}
                   isLastStep
@@ -653,16 +626,12 @@ export default function UnderwritingFormView() {
 function StepFooter({
   onBack,
   onNext,
-  onSave,
-  saveMessage,
   submitLabel,
   submitDisabled,
   isLastStep,
 }: {
   onBack?: () => void;
   onNext?: () => void;
-  onSave: () => void;
-  saveMessage: string;
   submitLabel?: string;
   submitDisabled?: boolean;
   isLastStep?: boolean;
@@ -674,12 +643,6 @@ function StepFooter({
           <Button type="button" appearance="secondary" size="lg" onClick={onBack} className="min-w-[100px]">
             Back
           </Button>
-        )}
-        <Button type="button" appearance="ghost" size="lg" onClick={onSave}>
-          Save Draft
-        </Button>
-        {saveMessage && (
-          <span className="text-[13px] text-[#079F8F] font-medium">{saveMessage}</span>
         )}
       </div>
       <div>

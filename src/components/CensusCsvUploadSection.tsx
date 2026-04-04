@@ -62,7 +62,7 @@ export default function CensusCsvUploadSection({
         </div>
 
         <div className="flex flex-col gap-1">
-          <p className="font-semibold">3. Upload the completed CSV file{slots.length > 1 ? 's' : ''} into Rippling</p>
+          <p className="font-semibold">3. Upload the completed CSV file{slots.length > 1 ? 's' : ''}</p>
         </div>
       </div>
 
