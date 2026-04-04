@@ -109,6 +109,7 @@ export default function UnderwritingFormView() {
     setOtherFinancialDocs,
     setAdditionalConsiderations,
     validate,
+    validateStep,
     setIsSubmitting,
   } = useUnderwritingForm();
 
@@ -137,6 +138,13 @@ export default function UnderwritingFormView() {
   };
 
   const goNext = () => {
+    if (!validateStep(currentStep)) {
+      const firstErrorEl = document.querySelector('[id^="field-"]');
+      if (firstErrorEl) {
+        firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setCurrentStep((s) => Math.min(s + 1, 2));
   };

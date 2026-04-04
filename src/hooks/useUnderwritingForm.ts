@@ -8,7 +8,7 @@ import {
   createEmptyFormData,
 } from '../types/underwriting';
 
-function validateForm(data: UnderwritingFormData): FormValidationErrors {
+function validateStep1(data: UnderwritingFormData): FormValidationErrors {
   const errors: FormValidationErrors = {};
 
   const addr = data.companyInfo.companyAddress;
@@ -42,6 +42,12 @@ function validateForm(data: UnderwritingFormData): FormValidationErrors {
     errors.companyTaxId = 'Company tax ID is required';
   }
 
+  return errors;
+}
+
+function validateStep2(data: UnderwritingFormData): FormValidationErrors {
+  const errors: FormValidationErrors = {};
+
   if (!data.workforceReason) {
     errors.workforceReason = 'Please select your workforce situation';
   }
@@ -64,11 +70,25 @@ function validateForm(data: UnderwritingFormData): FormValidationErrors {
     }
   }
 
+  return errors;
+}
+
+function validateStep3(data: UnderwritingFormData): FormValidationErrors {
+  const errors: FormValidationErrors = {};
+
   if (data.financialDetails.bankStatements.length === 0) {
     errors.bankStatements = 'Bank statements are required';
   }
 
   return errors;
+}
+
+function validateForm(data: UnderwritingFormData): FormValidationErrors {
+  return {
+    ...validateStep1(data),
+    ...validateStep2(data),
+    ...validateStep3(data),
+  };
 }
 
 export interface UseUnderwritingFormReturn {
@@ -90,6 +110,7 @@ export interface UseUnderwritingFormReturn {
   setCensusFile: (files: File[]) => void;
   setAdditionalConsiderations: (value: string) => void;
   validate: () => boolean;
+  validateStep: (step: number) => boolean;
   setIsSubmitting: (value: boolean) => void;
   clearErrors: () => void;
 }
@@ -195,6 +216,13 @@ export function useUnderwritingForm(): UseUnderwritingFormReturn {
     return Object.keys(validationErrors).length === 0;
   }, [formData]);
 
+  const validateStep = useCallback((step: number): boolean => {
+    const validators = [validateStep1, validateStep2, validateStep3];
+    const stepErrors = validators[step]?.(formData) ?? {};
+    setErrors(stepErrors);
+    return Object.keys(stepErrors).length === 0;
+  }, [formData]);
+
   const clearErrors = useCallback(() => {
     setErrors({});
   }, []);
@@ -218,6 +246,7 @@ export function useUnderwritingForm(): UseUnderwritingFormReturn {
     setCensusFile,
     setAdditionalConsiderations,
     validate,
+    validateStep,
     setIsSubmitting,
     clearErrors,
   };
