@@ -63,10 +63,10 @@ function validateStep2(data: UnderwritingFormData): FormValidationErrors {
 
   if (!hasCensusFile) {
     if (showEor && data.eorCensusCsv.length === 0) {
-      errors.eorCensusCsv = 'Please upload your completed EOR census CSV';
+      errors.eorCensusCsv = 'Please upload your completed EOR CSV';
     }
     if (showCor && data.corCensusCsv.length === 0) {
-      errors.corCensusCsv = 'Please upload your completed COR census CSV';
+      errors.corCensusCsv = 'Please upload your completed COR CSV';
     }
   }
 
