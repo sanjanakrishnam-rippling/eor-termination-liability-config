@@ -2,18 +2,15 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUnderwritingForm } from '../hooks/useUnderwritingForm';
 import { submitUnderwritingApplication } from '../utils/api';
-import { countries, isEorSupported } from '../utils/countries';
-import { v4 as uuidv4 } from 'uuid';
-
 import InputText from '../components/InputText';
 import Select from '../components/Select';
 import FileUpload from '../components/FileUpload';
 import TextArea from '../components/TextArea';
 import Button from '../components/Button';
 import AlertBanner from '../components/AlertBanner';
+import CensusCsvUploadSection from '../components/CensusCsvUploadSection';
 
-import type { EorCountryEntry, CorCountryEntry, WorkforceReason } from '../types/underwriting';
-import type { SelectOption } from '../components/Select';
+import type { WorkforceReason } from '../types/underwriting';
 
 const WORKFORCE_REASON_OPTIONS = [
   { id: 'first_time', label: 'Setting up workforce for the first time' },
@@ -105,10 +102,8 @@ export default function UnderwritingFormView() {
     setWorkforceCensusFile,
     setProductType,
     setWaiveDepositForFee,
-    addEorEntry,
-    removeEorEntry,
-    addCorEntry,
-    removeCorEntry,
+    setEorCensusCsv,
+    setCorCensusCsv,
     setBankStatements,
     setOtherFinancialDocs,
     setAdditionalConsiderations,
@@ -118,8 +113,6 @@ export default function UnderwritingFormView() {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [saveMessage, setSaveMessage] = useState('');
-  const [eorModalOpen, setEorModalOpen] = useState(false);
-  const [corModalOpen, setCorModalOpen] = useState(false);
   const [noCensusFile, setNoCensusFile] = useState(false);
 
   const handleSave = () => {
@@ -163,12 +156,6 @@ export default function UnderwritingFormView() {
 
   const showEor = formData.productType === 'eor' || formData.productType === 'both';
   const showCor = formData.productType === 'cor' || formData.productType === 'both';
-
-  const usedEorCountryIds = formData.eorCountryRequests.map((e) => e.country).filter(Boolean);
-  const availableEorCountries = countries.filter((c) => !usedEorCountryIds.includes(c.id));
-
-  const usedCorCountryIds = formData.corCountryRequests.map((e) => e.country).filter(Boolean);
-  const availableCorCountries = countries.filter((c) => !usedCorCountryIds.includes(c.id));
 
   const payrollNum = parseFloat(formData.avgMonthlyPayroll.replace(/[^0-9.]/g, '')) || 0;
   const isOtherFinancialRequired = payrollNum > 500000;
@@ -506,59 +493,29 @@ export default function UnderwritingFormView() {
                     </div>
 
                     {showEor && (
-                      <div id="field-eorCountryRequests" className="flex flex-col gap-4">
-                        <div className="border border-[#e5e7eb] rounded-lg p-5 flex flex-col gap-4">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-[16px] font-bold text-[#1a1a1a]">Employer of Record Details</h3>
-                            <Button
-                              appearance="primary"
-                              size="sm"
-                              onClick={() => setEorModalOpen(true)}
-                            >
-                              + Add Country
-                            </Button>
-                          </div>
-
-                          {errors.eorCountryRequests && formData.eorCountryRequests.length === 0 && (
-                            <p className="text-[#c3402c] text-[12px] leading-[16px]">
-                              {errors.eorCountryRequests}
-                            </p>
-                          )}
-
-                          <EorTable
-                            entries={formData.eorCountryRequests}
-                            onRemove={removeEorEntry}
-                          />
-                        </div>
-                      </div>
+                      <CensusCsvUploadSection
+                        fieldId="field-eorCensusCsv"
+                        title="Employer of Record Details"
+                        templatePath="/eor-census-template.csv"
+                        standardValuesPath="/eor-standard-values.csv"
+                        files={formData.eorCensusCsv}
+                        onFilesChange={setEorCensusCsv}
+                        error={!!errors.eorCensusCsv}
+                        errorMessage={errors.eorCensusCsv}
+                      />
                     )}
 
                     {showCor && (
-                      <div id="field-corCountryRequests" className="flex flex-col gap-4">
-                        <div className="border border-[#e5e7eb] rounded-lg p-5 flex flex-col gap-4">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-[16px] font-bold text-[#1a1a1a]">Contractor of Record Details</h3>
-                            <Button
-                              appearance="primary"
-                              size="sm"
-                              onClick={() => setCorModalOpen(true)}
-                            >
-                              + Add Country
-                            </Button>
-                          </div>
-
-                          {errors.corCountryRequests && formData.corCountryRequests.length === 0 && (
-                            <p className="text-[#c3402c] text-[12px] leading-[16px]">
-                              {errors.corCountryRequests}
-                            </p>
-                          )}
-
-                          <CorTable
-                            entries={formData.corCountryRequests}
-                            onRemove={removeCorEntry}
-                          />
-                        </div>
-                      </div>
+                      <CensusCsvUploadSection
+                        fieldId="field-corCensusCsv"
+                        title="Contractor of Record Details"
+                        templatePath="/cor-census-template.csv"
+                        standardValuesPath="/cor-standard-values.csv"
+                        files={formData.corCensusCsv}
+                        onFilesChange={setCorCensusCsv}
+                        error={!!errors.corCensusCsv}
+                        errorMessage={errors.corCensusCsv}
+                      />
                     )}
                   </>
                 )}
@@ -664,29 +621,6 @@ export default function UnderwritingFormView() {
             )}
           </form>
 
-          {/* EOR Modal */}
-          {eorModalOpen && (
-            <AddEorModal
-              availableCountries={availableEorCountries}
-              onAdd={(entry) => {
-                addEorEntry(entry);
-                setEorModalOpen(false);
-              }}
-              onClose={() => setEorModalOpen(false)}
-            />
-          )}
-
-          {/* COR Modal */}
-          {corModalOpen && (
-            <AddCorModal
-              availableCountries={availableCorCountries}
-              onAdd={(entry) => {
-                addCorEntry(entry);
-                setCorModalOpen(false);
-              }}
-              onClose={() => setCorModalOpen(false)}
-            />
-          )}
         </div>
       </div>
     </div>
@@ -743,359 +677,6 @@ function StepFooter({
             Next
           </Button>
         ) : null}
-      </div>
-    </div>
-  );
-}
-
-/* ─── EOR Table ─── */
-
-function EorTable({
-  entries,
-  onRemove,
-}: {
-  entries: EorCountryEntry[];
-  onRemove: (id: string) => void;
-}) {
-  return (
-    <div>
-      <div className="border border-[#e5e7eb] rounded-lg overflow-hidden">
-        <table className="w-full text-[13px]">
-          <thead>
-            <tr className="border-b border-[#e5e7eb] bg-[#fafafa]">
-              <th className="text-left px-3 py-2 font-semibold text-[#1a1a1a] w-[60px]">Delete</th>
-              <th className="text-left px-3 py-2 font-semibold text-[#1a1a1a]">Country Code</th>
-              <th className="text-left px-3 py-2 font-semibold text-[#1a1a1a]">Number of Employees</th>
-              <th className="text-right px-3 py-2 font-semibold text-[#1a1a1a]">Average Salary</th>
-              <th className="text-right px-3 py-2 font-semibold text-[#1a1a1a]">Average Bonus</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="text-center py-6 text-[#9ca3af]">
-                  No rows found
-                </td>
-              </tr>
-            ) : (
-              entries.map((entry) => (
-                <tr key={entry.id} className="border-b border-[#e5e7eb] last:border-b-0">
-                  <td className="px-3 py-2">
-                    <button
-                      type="button"
-                      onClick={() => onRemove(entry.id)}
-                      className="text-[#c3402c] hover:text-[#a32d1c] transition-colors"
-                      aria-label="Delete row"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </td>
-                  <td className="px-3 py-2 text-[#1a1a1a]">{entry.country}</td>
-                  <td className="px-3 py-2 text-[#1a1a1a]">{entry.numberOfEmployees}</td>
-                  <td className="px-3 py-2 text-right text-[#1a1a1a]">{entry.avgMonthlySalaryUsd ? `USD $${entry.avgMonthlySalaryUsd}` : '—'}</td>
-                  <td className="px-3 py-2 text-right text-[#1a1a1a]">{entry.avgEoyBonusUsd ? `USD $${entry.avgEoyBonusUsd}` : '—'}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-/* ─── COR Table ─── */
-
-function CorTable({
-  entries,
-  onRemove,
-}: {
-  entries: CorCountryEntry[];
-  onRemove: (id: string) => void;
-}) {
-  return (
-    <div>
-      <div className="border border-[#e5e7eb] rounded-lg overflow-hidden">
-        <table className="w-full text-[13px]">
-          <thead>
-            <tr className="border-b border-[#e5e7eb] bg-[#fafafa]">
-              <th className="text-left px-3 py-2 font-semibold text-[#1a1a1a] w-[60px]">Delete</th>
-              <th className="text-left px-3 py-2 font-semibold text-[#1a1a1a]">Country Code</th>
-              <th className="text-left px-3 py-2 font-semibold text-[#1a1a1a]">Monthly/Hourly Contractors</th>
-              <th className="text-left px-3 py-2 font-semibold text-[#1a1a1a]">Milestone Contractors</th>
-              <th className="text-right px-3 py-2 font-semibold text-[#1a1a1a]">Avg Monthly Pay</th>
-              <th className="text-right px-3 py-2 font-semibold text-[#1a1a1a]">Avg Milestone Amt</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="text-center py-6 text-[#9ca3af]">
-                  No rows found
-                </td>
-              </tr>
-            ) : (
-              entries.map((entry) => (
-                <tr key={entry.id} className="border-b border-[#e5e7eb] last:border-b-0">
-                  <td className="px-3 py-2">
-                    <button
-                      type="button"
-                      onClick={() => onRemove(entry.id)}
-                      className="text-[#c3402c] hover:text-[#a32d1c] transition-colors"
-                      aria-label="Delete row"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </td>
-                  <td className="px-3 py-2 text-[#1a1a1a]">{entry.country}</td>
-                  <td className="px-3 py-2 text-[#1a1a1a]">{entry.numberOfMonthlyHourlyContractors}</td>
-                  <td className="px-3 py-2 text-[#1a1a1a]">{entry.numberOfMilestoneContractors}</td>
-                  <td className="px-3 py-2 text-right text-[#1a1a1a]">{entry.avgMonthlyPayUsd ? `USD $${entry.avgMonthlyPayUsd}` : '—'}</td>
-                  <td className="px-3 py-2 text-right text-[#1a1a1a]">{entry.avgMilestoneAmountUsd ? `USD $${entry.avgMilestoneAmountUsd}` : '—'}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Add EOR Modal ─── */
-
-function AddEorModal({
-  availableCountries,
-  onAdd,
-  onClose,
-}: {
-  availableCountries: SelectOption[];
-  onAdd: (entry: EorCountryEntry) => void;
-  onClose: () => void;
-}) {
-  const [country, setCountry] = useState('');
-  const [numberOfEmployees, setNumberOfEmployees] = useState('');
-  const [avgMonthlySalaryUsd, setAvgMonthlySalaryUsd] = useState('');
-  const [avgEoyBonusUsd, setAvgEoyBonusUsd] = useState('');
-  const [modalErrors, setModalErrors] = useState<Record<string, string>>({});
-
-  const countryUnsupported = country !== '' && !isEorSupported(country);
-
-  const handleAdd = () => {
-    const errs: Record<string, string> = {};
-    if (!country) errs.country = 'Country is required';
-    if (countryUnsupported) errs.country = 'EOR is not currently supported in this country';
-    if (!numberOfEmployees.trim()) errs.numberOfEmployees = 'Number of employees is required';
-    if (!avgMonthlySalaryUsd.trim()) errs.avgMonthlySalaryUsd = 'Average monthly salary is required';
-
-    if (Object.keys(errs).length > 0) {
-      setModalErrors(errs);
-      return;
-    }
-
-    onAdd({
-      id: uuidv4(),
-      country,
-      numberOfEmployees,
-      avgMonthlySalaryUsd,
-      avgEoyBonusUsd,
-    });
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-[560px] mx-4 p-6 flex flex-col gap-5">
-        <div className="flex items-center justify-between">
-          <h3 className="text-[18px] font-bold text-[#1a1a1a]">Add Employer of Record for a New Country</h3>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1 hover:bg-[#f3f4f6] rounded-lg transition-colors"
-            aria-label="Close"
-          >
-            <svg className="w-5 h-5 text-[#6b7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <Select
-            label="Country (only one entry per company)"
-            value={country}
-            options={availableCountries}
-            onChange={setCountry}
-            placeholder="Select a country"
-            required
-            searchable
-            error={!!modalErrors.country}
-            errorMessage={modalErrors.country}
-          />
-          {countryUnsupported && (
-            <AlertBanner
-              variant="error"
-              message="EOR is not currently supported in this country."
-            />
-          )}
-          {!countryUnsupported && (
-            <>
-              <InputText
-                label="Number of employees"
-                value={numberOfEmployees}
-                onChange={setNumberOfEmployees}
-                placeholder="0"
-                required
-                error={!!modalErrors.numberOfEmployees}
-                errorMessage={modalErrors.numberOfEmployees}
-              />
-              <InputText
-                label="Average monthly salary in USD"
-                value={avgMonthlySalaryUsd}
-                onChange={setAvgMonthlySalaryUsd}
-                placeholder="0"
-                prefix="USD $"
-                required
-                error={!!modalErrors.avgMonthlySalaryUsd}
-                errorMessage={modalErrors.avgMonthlySalaryUsd}
-              />
-              <InputText
-                label="Average employee EoY bonus in USD"
-                value={avgEoyBonusUsd}
-                onChange={setAvgEoyBonusUsd}
-                placeholder="0"
-                prefix="USD $"
-              />
-            </>
-          )}
-        </div>
-
-        {!countryUnsupported && (
-          <div className="flex justify-end pt-2">
-            <Button appearance="primary" size="md" onClick={handleAdd}>
-              Add
-            </Button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ─── Add COR Modal ─── */
-
-function AddCorModal({
-  availableCountries,
-  onAdd,
-  onClose,
-}: {
-  availableCountries: SelectOption[];
-  onAdd: (entry: CorCountryEntry) => void;
-  onClose: () => void;
-}) {
-  const [country, setCountry] = useState('');
-  const [numberOfMonthlyHourlyContractors, setNumberOfMonthlyHourlyContractors] = useState('');
-  const [numberOfMilestoneContractors, setNumberOfMilestoneContractors] = useState('');
-  const [avgMonthlyPayUsd, setAvgMonthlyPayUsd] = useState('');
-  const [avgMilestoneAmountUsd, setAvgMilestoneAmountUsd] = useState('');
-  const [modalErrors, setModalErrors] = useState<Record<string, string>>({});
-
-  const handleAdd = () => {
-    const errs: Record<string, string> = {};
-    if (!country) errs.country = 'Country is required';
-    if (!numberOfMonthlyHourlyContractors.trim())
-      errs.numberOfMonthlyHourlyContractors = 'Number of monthly/hourly contractors is required';
-    if (!numberOfMilestoneContractors.trim())
-      errs.numberOfMilestoneContractors = 'Number of milestone contractors is required';
-
-    if (Object.keys(errs).length > 0) {
-      setModalErrors(errs);
-      return;
-    }
-
-    onAdd({
-      id: uuidv4(),
-      country,
-      numberOfMonthlyHourlyContractors,
-      numberOfMilestoneContractors,
-      avgMonthlyPayUsd,
-      avgMilestoneAmountUsd,
-    });
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-[560px] mx-4 p-6 flex flex-col gap-5">
-        <div className="flex items-center justify-between">
-          <h3 className="text-[18px] font-bold text-[#1a1a1a]">Add Contractor of Record for a New Country</h3>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1 hover:bg-[#f3f4f6] rounded-lg transition-colors"
-            aria-label="Close"
-          >
-            <svg className="w-5 h-5 text-[#6b7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <Select
-            label="Country"
-            value={country}
-            options={availableCountries}
-            onChange={setCountry}
-            placeholder="Select a country"
-            required
-            searchable
-            error={!!modalErrors.country}
-            errorMessage={modalErrors.country}
-          />
-          <InputText
-            label="Number of monthly/hourly contractors"
-            value={numberOfMonthlyHourlyContractors}
-            onChange={setNumberOfMonthlyHourlyContractors}
-            placeholder="Enter value"
-            required
-            error={!!modalErrors.numberOfMonthlyHourlyContractors}
-            errorMessage={modalErrors.numberOfMonthlyHourlyContractors}
-          />
-          <InputText
-            label="Number of milestone contractors"
-            value={numberOfMilestoneContractors}
-            onChange={setNumberOfMilestoneContractors}
-            placeholder="Enter value"
-            required
-            error={!!modalErrors.numberOfMilestoneContractors}
-            errorMessage={modalErrors.numberOfMilestoneContractors}
-          />
-          <InputText
-            label="Average monthly pay in USD"
-            value={avgMonthlyPayUsd}
-            onChange={setAvgMonthlyPayUsd}
-            placeholder="Enter value"
-            prefix="USD $"
-          />
-          <InputText
-            label="Average milestone amount in USD"
-            value={avgMilestoneAmountUsd}
-            onChange={setAvgMilestoneAmountUsd}
-            placeholder="Enter value"
-            prefix="USD $"
-          />
-        </div>
-
-        <div className="flex justify-end pt-2">
-          <Button appearance="primary" size="md" onClick={handleAdd}>
-            Add
-          </Button>
-        </div>
       </div>
     </div>
   );

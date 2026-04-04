@@ -2,8 +2,6 @@ import { useState, useCallback } from 'react';
 import {
   type UnderwritingFormData,
   type FormValidationErrors,
-  type EorCountryEntry,
-  type CorCountryEntry,
   type CompanyInfo,
   type Address,
   type WorkforceReason,
@@ -59,38 +57,11 @@ function validateForm(data: UnderwritingFormData): FormValidationErrors {
   const showEor = data.productType === 'eor' || data.productType === 'both';
   const showCor = data.productType === 'cor' || data.productType === 'both';
 
-  if (showEor && data.eorCountryRequests.length === 0) {
-    errors.eorCountryRequests = 'Please add at least one EOR country';
+  if (showEor && data.eorCensusCsv.length === 0) {
+    errors.eorCensusCsv = 'Please upload your completed EOR census CSV';
   }
-  if (showEor) {
-    data.eorCountryRequests.forEach((entry, idx) => {
-      if (!entry.country) {
-        errors[`eor_country_${idx}`] = 'Country is required';
-      }
-      if (!entry.numberOfEmployees.trim()) {
-        errors[`eor_employees_${idx}`] = 'Number of employees is required';
-      }
-      if (!entry.avgMonthlySalaryUsd.trim()) {
-        errors[`eor_salary_${idx}`] = 'Average monthly salary is required';
-      }
-    });
-  }
-
-  if (showCor && data.corCountryRequests.length === 0) {
-    errors.corCountryRequests = 'Please add at least one COR country';
-  }
-  if (showCor) {
-    data.corCountryRequests.forEach((entry, idx) => {
-      if (!entry.country) {
-        errors[`cor_country_${idx}`] = 'Country is required';
-      }
-      if (!entry.numberOfMonthlyHourlyContractors.trim()) {
-        errors[`cor_monthlyContractors_${idx}`] = 'Number of monthly/hourly contractors is required';
-      }
-      if (!entry.numberOfMilestoneContractors.trim()) {
-        errors[`cor_milestoneContractors_${idx}`] = 'Number of milestone contractors is required';
-      }
-    });
+  if (showCor && data.corCensusCsv.length === 0) {
+    errors.corCensusCsv = 'Please upload your completed COR census CSV';
   }
 
   if (data.financialDetails.bankStatements.length === 0) {
@@ -117,10 +88,8 @@ export interface UseUnderwritingFormReturn {
   setWorkforceReason: (value: WorkforceReason | '') => void;
   setWorkforceCensusFile: (files: File[]) => void;
   setProductType: (value: UnderwritingFormData['productType']) => void;
-  addEorEntry: (entry: EorCountryEntry) => void;
-  removeEorEntry: (id: string) => void;
-  addCorEntry: (entry: CorCountryEntry) => void;
-  removeCorEntry: (id: string) => void;
+  setEorCensusCsv: (files: File[]) => void;
+  setCorCensusCsv: (files: File[]) => void;
   setWaiveDepositForFee: (value: boolean) => void;
   setBankStatements: (files: File[]) => void;
   setOtherFinancialDocs: (files: File[]) => void;
@@ -189,32 +158,12 @@ export function useUnderwritingForm(): UseUnderwritingFormReturn {
     [],
   );
 
-  const addEorEntry = useCallback((entry: EorCountryEntry) => {
-    setFormData((prev) => ({
-      ...prev,
-      eorCountryRequests: [...prev.eorCountryRequests, entry],
-    }));
+  const setEorCensusCsv = useCallback((files: File[]) => {
+    setFormData((prev) => ({ ...prev, eorCensusCsv: files }));
   }, []);
 
-  const removeEorEntry = useCallback((id: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      eorCountryRequests: prev.eorCountryRequests.filter((e) => e.id !== id),
-    }));
-  }, []);
-
-  const addCorEntry = useCallback((entry: CorCountryEntry) => {
-    setFormData((prev) => ({
-      ...prev,
-      corCountryRequests: [...prev.corCountryRequests, entry],
-    }));
-  }, []);
-
-  const removeCorEntry = useCallback((id: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      corCountryRequests: prev.corCountryRequests.filter((e) => e.id !== id),
-    }));
+  const setCorCensusCsv = useCallback((files: File[]) => {
+    setFormData((prev) => ({ ...prev, corCensusCsv: files }));
   }, []);
 
   const setWaiveDepositForFee = useCallback((value: boolean) => {
@@ -267,10 +216,8 @@ export function useUnderwritingForm(): UseUnderwritingFormReturn {
     setWorkforceReason,
     setWorkforceCensusFile,
     setProductType,
-    addEorEntry,
-    removeEorEntry,
-    addCorEntry,
-    removeCorEntry,
+    setEorCensusCsv,
+    setCorCensusCsv,
     setWaiveDepositForFee,
     setBankStatements,
     setOtherFinancialDocs,

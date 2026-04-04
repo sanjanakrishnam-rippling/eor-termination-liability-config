@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, type ReactNode } from 'react';
 
 export interface FileUploadProps {
   label: string;
@@ -12,6 +12,7 @@ export interface FileUploadProps {
   helpText?: string;
   disabled?: boolean;
   className?: string;
+  selectPrompt?: ReactNode;
 }
 
 function formatFileSize(bytes: number): string {
@@ -32,6 +33,7 @@ export default function FileUpload({
   helpText,
   disabled = false,
   className = '',
+  selectPrompt,
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -66,15 +68,16 @@ export default function FileUpload({
 
   return (
     <div className={`flex flex-col gap-1 items-start w-full ${className}`}>
-      {/* Label */}
-      <div className="flex gap-1 items-center">
-        <p className="font-semibold leading-[22px] text-[#1a1a1a] text-[14px] tracking-[0.1px]">
-          {label}
-        </p>
-        {required && (
-          <span className="text-[#c3402c] leading-[22px]">*</span>
-        )}
-      </div>
+      {label && (
+        <div className="flex gap-1 items-center">
+          <p className="font-semibold leading-[22px] text-[#1a1a1a] text-[14px] tracking-[0.1px]">
+            {label}
+          </p>
+          {required && (
+            <span className="text-[#c3402c] leading-[22px]">*</span>
+          )}
+        </div>
+      )}
 
       {helpText && (
         <p className="text-[13px] leading-[18px] text-[#8f8f8f] tracking-[0.25px]">
@@ -109,8 +112,12 @@ export default function FileUpload({
           />
         </svg>
         <p className="text-[14px] text-[#595555] text-center">
-          <span className="font-medium text-[#4a6ba6]">Click to upload</span>{' '}
-          or drag and drop
+          {selectPrompt ?? (
+            <>
+              <span className="font-medium text-[#4a6ba6]">Click to upload</span>{' '}
+              or drag and drop
+            </>
+          )}
         </p>
         <input
           ref={inputRef}

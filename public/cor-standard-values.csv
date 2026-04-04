@@ -1,0 +1,6 @@
+Field,Accepted Values,Notes
+Country Code,"AU, BR, CA, DE, ES, FR, GB, IN, JP, MX, NL, SG, and more",Use ISO 3166-1 alpha-2 country codes
+Number of Monthly/Hourly Contractors,"0, 1, 2, 3, ...",Whole numbers only
+Number of Milestone Contractors,"0, 1, 2, 3, ...",Whole numbers only
+Average Monthly Pay (USD),"1000, 5000, 10000, ...",Numeric value in USD (optional)
+Average Milestone Amount (USD),"0, 1000, 5000, ...",Numeric value in USD (optional)

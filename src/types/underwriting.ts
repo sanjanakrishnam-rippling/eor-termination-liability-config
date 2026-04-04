@@ -41,23 +41,6 @@ export interface CompanyInfo {
   companyWebsite: string;
 }
 
-export interface EorCountryEntry {
-  id: string;
-  country: string;
-  numberOfEmployees: string;
-  avgMonthlySalaryUsd: string;
-  avgEoyBonusUsd: string;
-}
-
-export interface CorCountryEntry {
-  id: string;
-  country: string;
-  numberOfMonthlyHourlyContractors: string;
-  numberOfMilestoneContractors: string;
-  avgMonthlyPayUsd: string;
-  avgMilestoneAmountUsd: string;
-}
-
 export interface FinancialDetails {
   bankStatements: File[];
   otherFinancialDocs: File[];
@@ -70,8 +53,8 @@ export interface UnderwritingFormData {
   workforceCensusFile: File[];
   avgMonthlyPayroll: string;
   productType: ProductType | '';
-  eorCountryRequests: EorCountryEntry[];
-  corCountryRequests: CorCountryEntry[];
+  eorCensusCsv: File[];
+  corCensusCsv: File[];
   waiveDepositForFee: boolean;
   financialDetails: FinancialDetails;
   additionalConsiderations: string;
@@ -103,27 +86,6 @@ export function createEmptyCompanyInfo(): CompanyInfo {
   };
 }
 
-export function createEmptyEorEntry(id: string): EorCountryEntry {
-  return {
-    id,
-    country: '',
-    numberOfEmployees: '',
-    avgMonthlySalaryUsd: '',
-    avgEoyBonusUsd: '',
-  };
-}
-
-export function createEmptyCorEntry(id: string): CorCountryEntry {
-  return {
-    id,
-    country: '',
-    numberOfMonthlyHourlyContractors: '',
-    numberOfMilestoneContractors: '',
-    avgMonthlyPayUsd: '',
-    avgMilestoneAmountUsd: '',
-  };
-}
-
 export function createEmptyFormData(): UnderwritingFormData {
   return {
     companyInfo: createEmptyCompanyInfo(),
@@ -131,8 +93,8 @@ export function createEmptyFormData(): UnderwritingFormData {
     workforceCensusFile: [],
     avgMonthlyPayroll: '',
     productType: '',
-    eorCountryRequests: [],
-    corCountryRequests: [],
+    eorCensusCsv: [],
+    corCensusCsv: [],
     waiveDepositForFee: false,
     financialDetails: {
       bankStatements: [],
