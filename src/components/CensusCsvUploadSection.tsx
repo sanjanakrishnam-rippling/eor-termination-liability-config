@@ -1,50 +1,60 @@
+import type { ReactNode } from 'react';
 import FileUpload from './FileUpload';
 
-export default function CensusCsvUploadSection({
-  title,
-  templatePath,
-  files,
-  onFilesChange,
-  error,
-  errorMessage,
-  fieldId,
-}: {
-  title: string;
+interface TemplateSlot {
+  label: string;
   templatePath: string;
+  fieldId: string;
   files: File[];
   onFilesChange: (files: File[]) => void;
   error: boolean;
   errorMessage: string | undefined;
-  fieldId: string;
+}
+
+const DownloadIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+    />
+  </svg>
+);
+
+export default function CensusCsvUploadSection({
+  title,
+  slots,
+}: {
+  title: string;
+  slots: TemplateSlot[];
 }) {
   return (
-    <div id={fieldId} className="border border-[#e5e7eb] rounded-lg p-5 flex flex-col gap-4">
+    <div className="border border-[#e5e7eb] rounded-lg p-5 flex flex-col gap-4">
       <h3 className="text-[16px] font-bold text-[#1a1a1a]">{title}</h3>
 
       <h4 className="text-[15px] font-bold text-[#1a1a1a]">Instructions</h4>
 
       <div className="flex flex-col gap-4 text-[14px] leading-[20px] text-[#1a1a1a]">
         <div className="flex flex-col gap-2">
-          <p className="font-semibold">1. Download the CSV template</p>
-          <a
-            href={templatePath}
-            download
-            className="inline-flex items-center gap-2 rounded-lg border border-[#d5d5d5] bg-white px-4 py-2 text-[14px] font-medium text-[#1a1a1a] w-fit hover:bg-[#f9fafb] transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-              />
-            </svg>
-            Download CSV template
-          </a>
+          <p className="font-semibold">1. Download the CSV template{slots.length > 1 ? 's' : ''}</p>
+          <div className="flex flex-wrap gap-2">
+            {slots.map((slot) => (
+              <a
+                key={slot.fieldId}
+                href={slot.templatePath}
+                download
+                className="inline-flex items-center gap-2 rounded-lg border border-[#d5d5d5] bg-white px-4 py-2 text-[14px] font-medium text-[#1a1a1a] w-fit hover:bg-[#f9fafb] transition-colors"
+              >
+                <DownloadIcon />
+                {slots.length > 1 ? slot.label : 'Download CSV template'}
+              </a>
+            ))}
+          </div>
         </div>
 
         <div className="flex flex-col gap-1">
-          <p className="font-semibold">2. Enter the hire profile details into the CSV worksheet</p>
+          <p className="font-semibold">2. Enter the hire profile details into the CSV worksheet{slots.length > 1 ? 's' : ''}</p>
           <p className="text-[#6b7280]">
             Fill out the required fields and any optional fields that you would like to include in your
             worksheet.
@@ -52,22 +62,29 @@ export default function CensusCsvUploadSection({
         </div>
 
         <div className="flex flex-col gap-1">
-          <p className="font-semibold">3. Upload the completed CSV file into Rippling</p>
+          <p className="font-semibold">3. Upload the completed CSV file{slots.length > 1 ? 's' : ''} into Rippling</p>
         </div>
       </div>
 
-      <FileUpload
-        label=""
-        files={files}
-        onFilesChange={onFilesChange}
-        accept=".csv"
-        multiple={false}
-        error={error}
-        errorMessage={errorMessage}
-        selectPrompt={
-          <span className="font-medium text-[#4a6ba6]">Drop or select (.csv)</span>
-        }
-      />
+      {slots.map((slot) => (
+        <div key={slot.fieldId} id={slot.fieldId} className="flex flex-col gap-1">
+          {slots.length > 1 && (
+            <p className="text-[14px] font-semibold text-[#1a1a1a]">{slot.label}</p>
+          )}
+          <FileUpload
+            label=""
+            files={slot.files}
+            onFilesChange={slot.onFilesChange}
+            accept=".csv"
+            multiple={false}
+            error={slot.error}
+            errorMessage={slot.errorMessage}
+            selectPrompt={
+              <span className="font-medium text-[#4a6ba6]">Drop or select (.csv)</span>
+            }
+          />
+        </div>
+      ))}
     </div>
   );
 }

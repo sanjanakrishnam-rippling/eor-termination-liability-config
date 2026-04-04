@@ -487,29 +487,57 @@ export default function UnderwritingFormView() {
                       />
                     </div>
 
-                    {showEor && (
+                    {showEor && showCor ? (
                       <CensusCsvUploadSection
-                        fieldId="field-eorCensusCsv"
+                        title="Employer of Record & Contractor of Record Details"
+                        slots={[
+                          {
+                            label: 'EOR CSV template',
+                            templatePath: '/eor-census-template.csv',
+                            fieldId: 'field-eorCensusCsv',
+                            files: formData.eorCensusCsv,
+                            onFilesChange: setEorCensusCsv,
+                            error: !!errors.eorCensusCsv,
+                            errorMessage: errors.eorCensusCsv,
+                          },
+                          {
+                            label: 'COR CSV template',
+                            templatePath: '/cor-census-template.csv',
+                            fieldId: 'field-corCensusCsv',
+                            files: formData.corCensusCsv,
+                            onFilesChange: setCorCensusCsv,
+                            error: !!errors.corCensusCsv,
+                            errorMessage: errors.corCensusCsv,
+                          },
+                        ]}
+                      />
+                    ) : showEor ? (
+                      <CensusCsvUploadSection
                         title="Employer of Record Details"
-                        templatePath="/eor-census-template.csv"
-                        files={formData.eorCensusCsv}
-                        onFilesChange={setEorCensusCsv}
-                        error={!!errors.eorCensusCsv}
-                        errorMessage={errors.eorCensusCsv}
+                        slots={[{
+                          label: 'EOR CSV template',
+                          templatePath: '/eor-census-template.csv',
+                          fieldId: 'field-eorCensusCsv',
+                          files: formData.eorCensusCsv,
+                          onFilesChange: setEorCensusCsv,
+                          error: !!errors.eorCensusCsv,
+                          errorMessage: errors.eorCensusCsv,
+                        }]}
                       />
-                    )}
-
-                    {showCor && (
+                    ) : showCor ? (
                       <CensusCsvUploadSection
-                        fieldId="field-corCensusCsv"
                         title="Contractor of Record Details"
-                        templatePath="/cor-census-template.csv"
-                        files={formData.corCensusCsv}
-                        onFilesChange={setCorCensusCsv}
-                        error={!!errors.corCensusCsv}
-                        errorMessage={errors.corCensusCsv}
+                        slots={[{
+                          label: 'COR CSV template',
+                          templatePath: '/cor-census-template.csv',
+                          fieldId: 'field-corCensusCsv',
+                          files: formData.corCensusCsv,
+                          onFilesChange: setCorCensusCsv,
+                          error: !!errors.corCensusCsv,
+                          errorMessage: errors.corCensusCsv,
+                        }]}
                       />
-                    )}
+                    ) : null}
                   </>
                 )}
 
