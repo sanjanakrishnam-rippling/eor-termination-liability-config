@@ -33,7 +33,7 @@ export default function EmailSentView() {
         <p className="text-[14px] leading-[22px] text-[#6b7280] text-center mb-2">
           The special link was sent to{' '}
           {email && <span className="font-semibold text-[#1a1a1a]">{email}</span>}
-          . This email contains a unique link for you to access the credit application for a corporate card.
+          . This email contains a unique link for you to access the underwriting application.
         </p>
 
         <p className="text-[14px] leading-[22px] text-[#6b7280] text-center">
