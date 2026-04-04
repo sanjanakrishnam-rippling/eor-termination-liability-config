@@ -480,7 +480,7 @@ export default function UnderwritingFormView() {
                         slots={[
                           {
                             label: 'EOR CSV',
-                            templatePath: '/eor-census-template.csv',
+                            templatePath: 'https://docs.google.com/spreadsheets/d/1ImxjybhLrOKWnEhkgTjWqEjVMt3S7BpOKJm2aMFptzE/edit?gid=1490520663#gid=1490520663',
                             fieldId: 'field-eorCensusCsv',
                             files: formData.eorCensusCsv,
                             onFilesChange: setEorCensusCsv,
@@ -489,7 +489,7 @@ export default function UnderwritingFormView() {
                           },
                           {
                             label: 'COR CSV',
-                            templatePath: '/cor-census-template.csv',
+                            templatePath: 'https://docs.google.com/spreadsheets/d/1ImxjybhLrOKWnEhkgTjWqEjVMt3S7BpOKJm2aMFptzE/edit?gid=1490520663#gid=1490520663',
                             fieldId: 'field-corCensusCsv',
                             files: formData.corCensusCsv,
                             onFilesChange: setCorCensusCsv,
@@ -503,7 +503,7 @@ export default function UnderwritingFormView() {
                         title="Employer of Record Details"
                         slots={[{
                           label: 'EOR CSV',
-                          templatePath: '/eor-census-template.csv',
+                          templatePath: 'https://docs.google.com/spreadsheets/d/1ImxjybhLrOKWnEhkgTjWqEjVMt3S7BpOKJm2aMFptzE/edit?gid=1490520663#gid=1490520663',
                           fieldId: 'field-eorCensusCsv',
                           files: formData.eorCensusCsv,
                           onFilesChange: setEorCensusCsv,
@@ -516,7 +516,7 @@ export default function UnderwritingFormView() {
                         title="Contractor of Record Details"
                         slots={[{
                           label: 'COR CSV',
-                          templatePath: '/cor-census-template.csv',
+                          templatePath: 'https://docs.google.com/spreadsheets/d/1ImxjybhLrOKWnEhkgTjWqEjVMt3S7BpOKJm2aMFptzE/edit?gid=1490520663#gid=1490520663',
                           fieldId: 'field-corCensusCsv',
                           files: formData.corCensusCsv,
                           onFilesChange: setCorCensusCsv,
