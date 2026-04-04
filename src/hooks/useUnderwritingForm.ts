@@ -45,7 +45,7 @@ function validateStep1(data: UnderwritingFormData): FormValidationErrors {
   return errors;
 }
 
-function validateStep2(data: UnderwritingFormData): FormValidationErrors {
+function validateStep2(data: UnderwritingFormData, noCensusFile = false): FormValidationErrors {
   const errors: FormValidationErrors = {};
 
   if (!data.workforceReason) {
@@ -56,12 +56,17 @@ function validateStep2(data: UnderwritingFormData): FormValidationErrors {
     errors.productType = 'Product type is required';
   }
 
+  if (data.workforceReason === 'moving_existing' && data.workforceCensusFile.length === 0 && !noCensusFile) {
+    errors.workforceCensusFile = 'Upload your census file, or check "I don\'t have a census file" to continue without one';
+  }
+
   const showEor = data.productType === 'eor' || data.productType === 'both';
   const showCor = data.productType === 'cor' || data.productType === 'both';
 
   const hasCensusFile = data.workforceCensusFile.length > 0;
+  const csvRequired = !hasCensusFile && (data.workforceReason === 'first_time' || noCensusFile);
 
-  if (!hasCensusFile) {
+  if (csvRequired) {
     if (showEor && data.eorCensusCsv.length === 0) {
       errors.eorCensusCsv = 'Please upload your completed EOR CSV';
     }
@@ -83,10 +88,10 @@ function validateStep3(data: UnderwritingFormData): FormValidationErrors {
   return errors;
 }
 
-function validateForm(data: UnderwritingFormData): FormValidationErrors {
+function validateForm(data: UnderwritingFormData, noCensusFile = false): FormValidationErrors {
   return {
     ...validateStep1(data),
-    ...validateStep2(data),
+    ...validateStep2(data, noCensusFile),
     ...validateStep3(data),
   };
 }
@@ -109,8 +114,8 @@ export interface UseUnderwritingFormReturn {
   setOtherFinancialDocs: (files: File[]) => void;
   setCensusFile: (files: File[]) => void;
   setAdditionalConsiderations: (value: string) => void;
-  validate: () => boolean;
-  validateStep: (step: number) => boolean;
+  validate: (noCensusFile?: boolean) => boolean;
+  validateStep: (step: number, noCensusFile?: boolean) => boolean;
   setIsSubmitting: (value: boolean) => void;
   clearErrors: () => void;
 }
@@ -210,15 +215,18 @@ export function useUnderwritingForm(): UseUnderwritingFormReturn {
     setFormData((prev) => ({ ...prev, additionalConsiderations: value }));
   }, []);
 
-  const validate = useCallback((): boolean => {
-    const validationErrors = validateForm(formData);
+  const validate = useCallback((noCensusFile = false): boolean => {
+    const validationErrors = validateForm(formData, noCensusFile);
     setErrors(validationErrors);
     return Object.keys(validationErrors).length === 0;
   }, [formData]);
 
-  const validateStep = useCallback((step: number): boolean => {
-    const validators = [validateStep1, validateStep2, validateStep3];
-    const stepErrors = validators[step]?.(formData) ?? {};
+  const validateStep = useCallback((step: number, noCensusFile = false): boolean => {
+    const stepErrors = step === 0
+      ? validateStep1(formData)
+      : step === 1
+        ? validateStep2(formData, noCensusFile)
+        : validateStep3(formData);
     setErrors(stepErrors);
     return Object.keys(stepErrors).length === 0;
   }, [formData]);

@@ -117,7 +117,7 @@ export default function UnderwritingFormView() {
   const [noCensusFile, setNoCensusFile] = useState(false);
 
   const handleSubmit = async () => {
-    if (!validate()) {
+    if (!validate(noCensusFile)) {
       const errorKeys = Object.keys(errors);
       if (errorKeys.length > 0) {
         const el = document.getElementById(`field-${errorKeys[0]}`);
@@ -138,7 +138,7 @@ export default function UnderwritingFormView() {
   };
 
   const goNext = () => {
-    if (!validateStep(currentStep)) {
+    if (!validateStep(currentStep, noCensusFile)) {
       const firstErrorEl = document.querySelector('[id^="field-"]');
       if (firstErrorEl) {
         firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -460,6 +460,8 @@ export default function UnderwritingFormView() {
                         helpText="Upload a census file (CSV/XLSX) of the workforce you are moving from another provider."
                         accept=".csv,.xlsx,.xls"
                         disabled={noCensusFile}
+                        error={!!errors.workforceCensusFile}
+                        errorMessage={errors.workforceCensusFile}
                       />
                     </div>
 
