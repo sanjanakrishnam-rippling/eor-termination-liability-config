@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import type { IntakeInfo } from '../types/underwriting';
 
 import FormSection from '../components/FormSection';
@@ -113,17 +113,6 @@ export default function IntakeFormView() {
           <h1 className="text-[26px] font-bold leading-[34px] text-[#1a1a1a] tracking-[-0.2px]">
             EOR Underwriting Application
           </h1>
-          <p className="mt-3 text-[16px] leading-[24px] text-[#6b7280]">
-            Enter your info and verify your email to start your underwriting application.
-            If you have already filled out this form, you can{' '}
-            <Link
-              to="/apply/continue"
-              className="font-semibold text-[#1e4aa9] no-underline hover:text-[#152d4a] transition-colors"
-            >
-              continue with your application
-            </Link>
-            .
-          </p>
         </div>
 
         <form

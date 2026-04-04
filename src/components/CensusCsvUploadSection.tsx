@@ -3,7 +3,6 @@ import FileUpload from './FileUpload';
 export default function CensusCsvUploadSection({
   title,
   templatePath,
-  standardValuesPath,
   files,
   onFilesChange,
   error,
@@ -12,7 +11,6 @@ export default function CensusCsvUploadSection({
 }: {
   title: string;
   templatePath: string;
-  standardValuesPath: string;
   files: File[];
   onFilesChange: (files: File[]) => void;
   error: boolean;
@@ -43,16 +41,6 @@ export default function CensusCsvUploadSection({
             </svg>
             Download CSV template
           </a>
-          <p className="text-[13px] text-[#6b7280]">
-            Not sure about accepted values?{' '}
-            <a
-              href={standardValuesPath}
-              download
-              className="text-[#4a6ba6] font-medium hover:underline"
-            >
-              standard value file
-            </a>
-          </p>
         </div>
 
         <div className="flex flex-col gap-1">
@@ -65,11 +53,6 @@ export default function CensusCsvUploadSection({
 
         <div className="flex flex-col gap-1">
           <p className="font-semibold">3. Upload the completed CSV file into Rippling</p>
-          <p className="text-[#6b7280]">
-            You can review and make changes to the data in Rippling spreadsheet after you upload the file.
-            Rippling will automatically validate your data, highlight any errors, and guide you toward
-            resolving those errors.
-          </p>
         </div>
       </div>
 

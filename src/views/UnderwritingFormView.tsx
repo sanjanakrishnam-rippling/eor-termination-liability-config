@@ -474,23 +474,17 @@ export default function UnderwritingFormView() {
 
                 {formData.productType && (formData.workforceReason === 'first_time' || (formData.workforceReason === 'moving_existing' && noCensusFile)) && (
                   <>
-                    <div className="flex flex-col gap-3 border border-[#e5e7eb] rounded-lg p-5">
-                      <p className="text-[14px] leading-[20px] text-[#1a1a1a]">
-                        <span className="font-semibold">Company Payroll:</span>{' '}
-                        Enter the total payroll for the company, including EOR employees, non-EOR employees and contractors.
-                      </p>
-                      <div id="field-avgMonthlyPayroll">
-                        <InputText
-                          label="1 Month of Payroll in USD (Avg)"
-                          value={formData.avgMonthlyPayroll}
-                          onChange={setAvgMonthlyPayroll}
-                          placeholder="0"
-                          prefix="USD $"
-                          required
-                          error={!!errors.avgMonthlyPayroll}
-                          errorMessage={errors.avgMonthlyPayroll}
-                        />
-                      </div>
+                    <div id="field-avgMonthlyPayroll">
+                      <InputText
+                        label="1 Month of Payroll in USD (Avg)"
+                        value={formData.avgMonthlyPayroll}
+                        onChange={setAvgMonthlyPayroll}
+                        placeholder="0"
+                        prefix="USD $"
+                        required
+                        error={!!errors.avgMonthlyPayroll}
+                        errorMessage={errors.avgMonthlyPayroll}
+                      />
                     </div>
 
                     {showEor && (
@@ -498,7 +492,6 @@ export default function UnderwritingFormView() {
                         fieldId="field-eorCensusCsv"
                         title="Employer of Record Details"
                         templatePath="/eor-census-template.csv"
-                        standardValuesPath="/eor-standard-values.csv"
                         files={formData.eorCensusCsv}
                         onFilesChange={setEorCensusCsv}
                         error={!!errors.eorCensusCsv}
@@ -511,7 +504,6 @@ export default function UnderwritingFormView() {
                         fieldId="field-corCensusCsv"
                         title="Contractor of Record Details"
                         templatePath="/cor-census-template.csv"
-                        standardValuesPath="/cor-standard-values.csv"
                         files={formData.corCensusCsv}
                         onFilesChange={setCorCensusCsv}
                         error={!!errors.corCensusCsv}
