@@ -46,10 +46,6 @@ function validateForm(data: UnderwritingFormData): FormValidationErrors {
     errors.workforceReason = 'Please select your workforce situation';
   }
 
-  if (!data.avgMonthlyPayroll.trim()) {
-    errors.avgMonthlyPayroll = 'Average monthly payroll is required';
-  }
-
   if (!data.productType) {
     errors.productType = 'Product type is required';
   }
@@ -57,21 +53,19 @@ function validateForm(data: UnderwritingFormData): FormValidationErrors {
   const showEor = data.productType === 'eor' || data.productType === 'both';
   const showCor = data.productType === 'cor' || data.productType === 'both';
 
-  if (showEor && data.eorCensusCsv.length === 0) {
-    errors.eorCensusCsv = 'Please upload your completed EOR census CSV';
-  }
-  if (showCor && data.corCensusCsv.length === 0) {
-    errors.corCensusCsv = 'Please upload your completed COR census CSV';
+  const hasCensusFile = data.workforceCensusFile.length > 0;
+
+  if (!hasCensusFile) {
+    if (showEor && data.eorCensusCsv.length === 0) {
+      errors.eorCensusCsv = 'Please upload your completed EOR census CSV';
+    }
+    if (showCor && data.corCensusCsv.length === 0) {
+      errors.corCensusCsv = 'Please upload your completed COR census CSV';
+    }
   }
 
   if (data.financialDetails.bankStatements.length === 0) {
     errors.bankStatements = 'Bank statements are required';
-  }
-
-  const payroll = parseFloat(data.avgMonthlyPayroll.replace(/[^0-9.]/g, '')) || 0;
-  if (payroll > 500000 && data.financialDetails.otherFinancialDocs.length === 0) {
-    errors.otherFinancialDocs =
-      'Financial statements and credit documentation are required when monthly EOR exceeds $500k';
   }
 
   return errors;
