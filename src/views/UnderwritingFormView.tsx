@@ -489,8 +489,8 @@ export default function UnderwritingFormView() {
                         title="Employer of Record & Contractor of Record Details"
                         slots={[
                           {
-                            label: 'EOR CSV',
-                            templatePath: 'https://docs.google.com/spreadsheets/d/1ImxjybhLrOKWnEhkgTjWqEjVMt3S7BpOKJm2aMFptzE/edit?gid=1490520663#gid=1490520663',
+                            label: 'EOR Template.csv',
+                            templatePath: '/EOR Template.csv',
                             fieldId: 'field-eorCensusCsv',
                             files: formData.eorCensusCsv,
                             onFilesChange: setEorCensusCsv,
@@ -498,8 +498,8 @@ export default function UnderwritingFormView() {
                             errorMessage: errors.eorCensusCsv,
                           },
                           {
-                            label: 'COR CSV',
-                            templatePath: 'https://docs.google.com/spreadsheets/d/1ImxjybhLrOKWnEhkgTjWqEjVMt3S7BpOKJm2aMFptzE/edit?gid=1490520663#gid=1490520663',
+                            label: 'COR Template.csv',
+                            templatePath: '/COR Template.csv',
                             fieldId: 'field-corCensusCsv',
                             files: formData.corCensusCsv,
                             onFilesChange: setCorCensusCsv,
@@ -512,8 +512,8 @@ export default function UnderwritingFormView() {
                       <CensusCsvUploadSection
                         title="Employer of Record Details"
                         slots={[{
-                          label: 'EOR CSV',
-                          templatePath: 'https://docs.google.com/spreadsheets/d/1ImxjybhLrOKWnEhkgTjWqEjVMt3S7BpOKJm2aMFptzE/edit?gid=1490520663#gid=1490520663',
+                          label: 'EOR Template.csv',
+                          templatePath: '/EOR Template.csv',
                           fieldId: 'field-eorCensusCsv',
                           files: formData.eorCensusCsv,
                           onFilesChange: setEorCensusCsv,
@@ -525,8 +525,8 @@ export default function UnderwritingFormView() {
                       <CensusCsvUploadSection
                         title="Contractor of Record Details"
                         slots={[{
-                          label: 'COR CSV',
-                          templatePath: 'https://docs.google.com/spreadsheets/d/1ImxjybhLrOKWnEhkgTjWqEjVMt3S7BpOKJm2aMFptzE/edit?gid=1490520663#gid=1490520663',
+                          label: 'COR Template.csv',
+                          templatePath: '/COR Template.csv',
                           fieldId: 'field-corCensusCsv',
                           files: formData.corCensusCsv,
                           onFilesChange: setCorCensusCsv,

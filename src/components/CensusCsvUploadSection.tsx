@@ -43,8 +43,7 @@ export default function CensusCsvUploadSection({
               <a
                 key={slot.fieldId}
                 href={slot.templatePath}
-                target="_blank"
-                rel="noopener noreferrer"
+                download
                 className="inline-flex items-center gap-2 rounded-lg border border-[#d5d5d5] bg-white px-4 py-2 text-[14px] font-medium text-[#1a1a1a] w-fit hover:bg-[#f9fafb] transition-colors"
               >
                 <DownloadIcon />
