@@ -113,6 +113,9 @@ export default function IntakeFormView() {
           <h1 className="text-[26px] font-bold leading-[34px] text-[#1a1a1a] tracking-[-0.2px]">
             EOR Underwriting Application
           </h1>
+          <p className="mt-2 text-[15px] leading-[22px] text-[#666] tracking-[0.1px]">
+            Provide details about your EOR/COR request and workforce information. Estimate hiring costs by country with the EOR Cost Calculator.
+          </p>
         </div>
 
         <form
