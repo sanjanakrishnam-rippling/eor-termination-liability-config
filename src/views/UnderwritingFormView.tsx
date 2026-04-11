@@ -411,19 +411,6 @@ export default function UnderwritingFormView() {
                   <h2 className="text-[18px] font-bold leading-[26px] text-[#1a1a1a] tracking-[0.1px]">
                     Step 2/3: Request Details
                   </h2>
-                  <p className="text-[14px] leading-[20px] text-[#6b7280] tracking-[0.1px]">
-                    Provide details about your EOR/COR request and workforce information.
-                    Estimate hiring costs by country with the{' '}
-                    <a
-                      href="https://www.rippling.com/employee-cost-calculator"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-semibold text-[#1e4aa9] hover:text-[#152d4a] transition-colors"
-                    >
-                      EOR Cost Calculator
-                    </a>
-                    .
-                  </p>
                 </div>
 
                 <div id="field-workforceReason">
