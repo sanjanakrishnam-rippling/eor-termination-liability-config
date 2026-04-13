@@ -546,7 +546,7 @@ export default function UnderwritingFormView() {
                         Request a Deposit Waiver
                       </span>
                       <span className="text-[13px] leading-[18px] text-[#6b7280]">
-                        Rippling EOR requires a refundable collateral deposit per employee. Eligible companies can request a fully waived deposit for a fixed per-employee-per-month rate of up to $150, subject to a credit risk review during underwriting.
+                        Rippling EOR requires a refundable collateral deposit per employee. Eligible companies can request to waive this deposit and instead pay a fixed fee of up to $150 per employee per month, subject to credit risk review during underwriting.
                       </span>
                     </div>
                   </label>
