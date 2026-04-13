@@ -543,10 +543,10 @@ export default function UnderwritingFormView() {
                     </div>
                     <div className="flex flex-col gap-1">
                       <span className="text-[14px] leading-[20px] font-semibold text-[#1a1a1a]">
-                        Waive Deposits
+                        Request a Deposit Waiver
                       </span>
                       <span className="text-[13px] leading-[18px] text-[#6b7280]">
-                        Interested in being considered for a deposit waiver up to $150 per employee/month?
+                        Rippling EOR requires a refundable collateral deposit per employee. Eligible companies can request a fully waived deposit for a fixed per-employee-per-month rate of up to $150, subject to a credit risk review during underwriting.
                       </span>
                     </div>
                   </label>
