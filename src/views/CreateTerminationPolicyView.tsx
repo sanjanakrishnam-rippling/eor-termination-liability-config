@@ -664,12 +664,29 @@ function VacationPayCard({
         </div>
       )}
 
-      <InputText
-        label="Maximum cap on days"
-        value={config.maxCapDays ?? ''}
-        onChange={(v) => onChange({ ...config, maxCapDays: v })}
-        placeholder="e.g. 30"
-      />
+      <div>
+        <label className="block text-[13px] font-medium text-[#374151] mb-1">Maximum cap on days</label>
+        <div className="flex items-center gap-3">
+          <select
+            value={config.maxCapDays === undefined || config.maxCapDays === '' ? 'none' : 'custom'}
+            onChange={(e) => onChange({ ...config, maxCapDays: e.target.value === 'none' ? '' : config.maxCapDays || '' })}
+            className="h-[40px] px-3 bg-white border border-[#d5d5d5] rounded-lg text-[13px] text-[#1a1a1a] outline-none focus:border-[#7A005D] focus:ring-1 focus:ring-[#7A005D]/20 transition-colors"
+          >
+            <option value="none">None</option>
+            <option value="custom">Custom</option>
+          </select>
+          {config.maxCapDays !== undefined && config.maxCapDays !== '' && (
+            <div className="flex-1">
+              <InputText
+                label=""
+                value={config.maxCapDays}
+                onChange={(v) => onChange({ ...config, maxCapDays: v })}
+                placeholder="e.g. 30"
+              />
+            </div>
+          )}
+        </div>
+      </div>
     </section>
   );
 }
