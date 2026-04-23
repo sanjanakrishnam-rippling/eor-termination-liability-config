@@ -23,7 +23,6 @@ interface SeveranceSubComponent {
   method?: string;
   valueDays?: string;
   maxCapDays?: string;
-  proratePartialYears?: string;
 }
 
 interface SeveranceConfig {
@@ -163,11 +162,6 @@ const SALARY_BASIS_OPTIONS = [
 const METHOD_OPTIONS = [
   { id: 'fixed', label: 'Fixed' },
   { id: 'per_years_of_service', label: 'Per Years of Service' },
-];
-
-const YES_NO_OPTIONS = [
-  { id: 'yes', label: 'Yes' },
-  { id: 'no', label: 'No' },
 ];
 
 const VACATION_MINIMUM_OPTIONS = [
@@ -738,13 +732,6 @@ function SeveranceSubSection({
               value={sub.maxCapDays ?? ''}
               onChange={(v) => onUpdate({ maxCapDays: v })}
               placeholder="e.g. 365"
-            />
-            <Select
-              label="Prorate for partial years?"
-              value={sub.proratePartialYears ?? ''}
-              options={YES_NO_OPTIONS}
-              onChange={(v) => onUpdate({ proratePartialYears: v })}
-              placeholder="Select..."
             />
           </div>
         </div>
