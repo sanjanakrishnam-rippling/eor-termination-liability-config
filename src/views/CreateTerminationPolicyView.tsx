@@ -15,6 +15,8 @@ interface ConditionPill {
   value: string;
 }
 
+type ConditionGroup = ConditionPill[];
+
 interface SeveranceSubComponent {
   enabled: boolean;
   salaryBasis: string[];
@@ -343,17 +345,19 @@ function FieldPickerPopover({
   );
 }
 
-/* ─── Pill with floating toolbar (DELETE / CHANGE / + AND) ─── */
+/* ─── Pill with floating toolbar (DELETE / CHANGE / + AND / + OR) ─── */
 function ConditionPillWithToolbar({
   pill,
   onDelete,
   onAndClick,
+  onOrClick,
   countryCode,
   onReplace,
 }: {
   pill: ConditionPill;
   onDelete: () => void;
   onAndClick: () => void;
+  onOrClick: () => void;
   countryCode: string;
   onReplace: (field: string, fieldLabel: string, operator: string, value: string) => void;
 }) {
@@ -409,12 +413,21 @@ function ConditionPillWithToolbar({
           </button>
           <button
             onClick={() => { onAndClick(); setShowToolbar(false); }}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-white text-[12px] font-semibold uppercase tracking-wide hover:bg-[#333] transition-colors"
+            className="flex items-center gap-1.5 px-3.5 py-2 text-white text-[12px] font-semibold uppercase tracking-wide hover:bg-[#333] transition-colors border-r border-[#444]"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             And
+          </button>
+          <button
+            onClick={() => { onOrClick(); setShowToolbar(false); }}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-white text-[12px] font-semibold uppercase tracking-wide hover:bg-[#333] transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Or
           </button>
         </div>
       )}
@@ -436,52 +449,72 @@ function ConditionPillWithToolbar({
   );
 }
 
+function OrSeparator() {
+  return (
+    <div className="flex items-center gap-3 my-2">
+      <div className="flex-1 h-px bg-[#e5e7eb]" />
+      <span className="text-[12px] font-semibold text-[#7A005D] uppercase tracking-wide">or</span>
+      <div className="flex-1 h-px bg-[#e5e7eb]" />
+    </div>
+  );
+}
+
 /* ─── Add Condition Modal ─── */
 function AddConditionModal({
   onSave,
   onClose,
-  existingConditions,
+  existingGroups,
   countryCode,
   countryName,
 }: {
-  onSave: (conditions: ConditionPill[]) => void;
+  onSave: (groups: ConditionGroup[]) => void;
   onClose: () => void;
-  existingConditions: ConditionPill[];
+  existingGroups: ConditionGroup[];
   countryCode: string;
   countryName: string;
 }) {
-  const [conditions, setConditions] = useState<ConditionPill[]>(() => {
-    if (existingConditions.length > 0) return existingConditions;
-    return [
+  const [groups, setGroups] = useState<ConditionGroup[]>(() => {
+    if (existingGroups.length > 0) return existingGroups;
+    return [[
       { id: `pill-${pillIdCounter++}`, field: 'is_eor_employee', fieldLabel: 'Is EOR Employee', operator: 'equals', value: 'True' },
       { id: `pill-${pillIdCounter++}`, field: 'country', fieldLabel: 'Country', operator: 'equals', value: countryName },
-    ];
+    ]];
   });
-  const [showAddPicker, setShowAddPicker] = useState(false);
+  const [addPickerTarget, setAddPickerTarget] = useState<{ type: 'and'; groupIdx: number } | { type: 'or' } | null>(null);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (showAddPicker) setShowAddPicker(false);
+        if (addPickerTarget) setAddPickerTarget(null);
         else onClose();
       }
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [onClose, showAddPicker]);
+  }, [onClose, addPickerTarget]);
 
-  const addPill = (field: string, fieldLabel: string, operator: string, value: string) => {
-    setConditions((prev) => [...prev, { id: `pill-${pillIdCounter++}`, field, fieldLabel, operator, value }]);
-    setShowAddPicker(false);
+  const addPillToGroup = (groupIdx: number, field: string, fieldLabel: string, operator: string, value: string) => {
+    setGroups((prev) =>
+      prev.map((g, i) => (i === groupIdx ? [...g, { id: `pill-${pillIdCounter++}`, field, fieldLabel, operator, value }] : g))
+    );
+    setAddPickerTarget(null);
   };
 
-  const removePill = (id: string) => {
-    setConditions((prev) => prev.filter((p) => p.id !== id));
+  const addNewOrGroup = (field: string, fieldLabel: string, operator: string, value: string) => {
+    setGroups((prev) => [...prev, [{ id: `pill-${pillIdCounter++}`, field, fieldLabel, operator, value }]]);
+    setAddPickerTarget(null);
   };
 
-  const replacePill = (id: string, field: string, fieldLabel: string, operator: string, value: string) => {
-    setConditions((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, field, fieldLabel, operator, value } : p))
+  const removePill = (groupIdx: number, pillId: string) => {
+    setGroups((prev) => {
+      const updated = prev.map((g, i) => (i === groupIdx ? g.filter((p) => p.id !== pillId) : g));
+      return updated.filter((g) => g.length > 0);
+    });
+  };
+
+  const replacePill = (groupIdx: number, pillId: string, field: string, fieldLabel: string, operator: string, value: string) => {
+    setGroups((prev) =>
+      prev.map((g, i) => (i === groupIdx ? g.map((p) => (p.id === pillId ? { ...p, field, fieldLabel, operator, value } : p)) : g))
     );
   };
 
@@ -501,38 +534,55 @@ function AddConditionModal({
           </button>
         </div>
 
-        <p className="px-6 pb-4 text-[13px] text-[#6b7280]">Click a condition to delete, change, or add another with AND.</p>
+        <p className="px-6 pb-4 text-[13px] text-[#6b7280]">Click a condition to delete, change, or add with AND / OR.</p>
 
         <div className="flex-1 overflow-y-auto px-6 pb-4">
           <div className="border border-[#e5e7eb] rounded-lg p-4">
             <p className="text-[14px] font-semibold text-[#1a1a1a] mb-3">Include people who are</p>
 
-            <div className="relative min-h-[60px]">
-              <div className="flex flex-wrap items-center gap-2">
-                {conditions.map((pill, idx) => (
-                  <span key={pill.id} className="contents">
-                    {idx > 0 && <AndSeparator />}
-                    <ConditionPillWithToolbar
-                      pill={pill}
-                      onDelete={() => removePill(pill.id)}
-                      onAndClick={() => setShowAddPicker(true)}
-                      countryCode={countryCode}
-                      onReplace={(f, fl, op, v) => replacePill(pill.id, f, fl, op, v)}
-                    />
-                  </span>
-                ))}
-              </div>
+            {groups.map((group, gIdx) => (
+              <div key={gIdx}>
+                {gIdx > 0 && <OrSeparator />}
+                <div className="relative">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {group.map((pill, pIdx) => (
+                      <span key={pill.id} className="contents">
+                        {pIdx > 0 && <AndSeparator />}
+                        <ConditionPillWithToolbar
+                          pill={pill}
+                          onDelete={() => removePill(gIdx, pill.id)}
+                          onAndClick={() => setAddPickerTarget({ type: 'and', groupIdx: gIdx })}
+                          onOrClick={() => setAddPickerTarget({ type: 'or' })}
+                          countryCode={countryCode}
+                          onReplace={(f, fl, op, v) => replacePill(gIdx, pill.id, f, fl, op, v)}
+                        />
+                      </span>
+                    ))}
+                  </div>
 
-              {showAddPicker && (
-                <div className="relative mt-2">
-                  <FieldPickerPopover
-                    onAdd={addPill}
-                    onClose={() => setShowAddPicker(false)}
-                    countryCode={countryCode}
-                  />
+                  {addPickerTarget?.type === 'and' && addPickerTarget.groupIdx === gIdx && (
+                    <div className="relative mt-2">
+                      <FieldPickerPopover
+                        onAdd={(f, fl, op, v) => addPillToGroup(gIdx, f, fl, op, v)}
+                        onClose={() => setAddPickerTarget(null)}
+                        countryCode={countryCode}
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
+            ))}
+
+            {addPickerTarget?.type === 'or' && (
+              <div className="relative mt-2">
+                <OrSeparator />
+                <FieldPickerPopover
+                  onAdd={(f, fl, op, v) => addNewOrGroup(f, fl, op, v)}
+                  onClose={() => setAddPickerTarget(null)}
+                  countryCode={countryCode}
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -540,7 +590,7 @@ function AddConditionModal({
           <Button appearance="secondary" size="md" onClick={onClose}>
             Cancel
           </Button>
-          <Button appearance="primary" size="md" onClick={() => onSave(conditions)}>
+          <Button appearance="primary" size="md" onClick={() => onSave(groups)}>
             Save
           </Button>
         </div>
@@ -822,15 +872,15 @@ export default function CreateTerminationPolicyView() {
 
   const [policyType, setPolicyType] = useState<PolicyType | null>(null);
   const [policyName, setPolicyName] = useState('');
-  const [conditions, setConditions] = useState<ConditionPill[]>([]);
+  const [conditionGroups, setConditionGroups] = useState<ConditionGroup[]>([]);
   const [showConditionModal, setShowConditionModal] = useState(false);
 
   const [severanceConfig, setSeveranceConfig] = useState<SeveranceConfig>(createEmptySeverance());
   const [vacationPayConfig, setVacationPayConfig] = useState<VacationPayConfig>({ type: 'vacation_pay', salaryBasis: [] });
   const [noticePeriodConfig, setNoticePeriodConfig] = useState<NoticePeriodConfig>({ type: 'notice_period_pay', salaryBasis: [] });
 
-  const handleSaveConditions = (newConditions: ConditionPill[]) => {
-    setConditions(newConditions);
+  const handleSaveConditions = (newGroups: ConditionGroup[]) => {
+    setConditionGroups(newGroups);
     setShowConditionModal(false);
   };
 
@@ -852,7 +902,7 @@ export default function CreateTerminationPolicyView() {
           { entity: 'Employee', field: 'Is an EOR Employee?', operator: 'equals', value: 'True' },
           { entity: 'Employee', field: 'Country?', operator: 'equals', value: countryName },
         ]
-      : conditions.map(pillToCondition);
+      : conditionGroups.flat().map(pillToCondition);
     const exceptFor: MemberCondition[] = [];
 
     const components: PolicyComponent[] = [];
@@ -1059,21 +1109,24 @@ export default function CreateTerminationPolicyView() {
             <SectionLabel>Who does this apply to?</SectionLabel>
             <SectionDescription>Define the conditions that determine which employees this policy covers.</SectionDescription>
 
-            {conditions.length > 0 ? (
-              <div className="border border-[#e5e7eb] rounded-lg mb-4">
-                <div className="p-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {conditions.map((pill, idx) => (
-                      <span key={pill.id} className="contents">
-                        {idx > 0 && <AndSeparator />}
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#f5f5f5] border border-[#e5e7eb] text-[13px]">
-                          <PillIcon />
-                          <span className="text-[#1a1a1a]">{pill.fieldLabel} → {pill.value}</span>
+            {conditionGroups.length > 0 ? (
+              <div className="border border-[#e5e7eb] rounded-lg mb-4 p-4">
+                {conditionGroups.map((group, gIdx) => (
+                  <div key={gIdx}>
+                    {gIdx > 0 && <OrSeparator />}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {group.map((pill, pIdx) => (
+                        <span key={pill.id} className="contents">
+                          {pIdx > 0 && <AndSeparator />}
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#f5f5f5] border border-[#e5e7eb] text-[13px]">
+                            <PillIcon />
+                            <span className="text-[#1a1a1a]">{pill.fieldLabel} → {pill.value}</span>
+                          </span>
                         </span>
-                      </span>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
             ) : null}
 
@@ -1084,7 +1137,7 @@ export default function CreateTerminationPolicyView() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              {conditions.length > 0 ? 'Edit conditions' : 'Add Condition'}
+              {conditionGroups.length > 0 ? 'Edit conditions' : 'Add Condition'}
             </button>
           </section>
         )}
@@ -1115,7 +1168,7 @@ export default function CreateTerminationPolicyView() {
         <AddConditionModal
           onSave={handleSaveConditions}
           onClose={() => setShowConditionModal(false)}
-          existingConditions={conditions}
+          existingGroups={conditionGroups}
           countryCode={code ?? ''}
           countryName={countryName}
         />
