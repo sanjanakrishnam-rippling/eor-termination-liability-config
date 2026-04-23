@@ -668,7 +668,7 @@ function VacationPayCard({
         label="Maximum cap on days offered"
         value={config.maxCapDays ?? ''}
         onChange={(v) => onChange({ ...config, maxCapDays: v })}
-        placeholder="Leave blank if not applicable"
+        placeholder="N/A"
       />
     </section>
   );
