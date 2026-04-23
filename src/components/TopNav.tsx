@@ -2,7 +2,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 const NAV_ITEMS = [
   { id: 'countries', label: 'Countries', path: '/countries' },
-  { id: 'termination', label: 'Termination Liability Policies', path: '/termination' },
   { id: 'underwriting', label: 'Underwriting', path: '/apply' },
 ];
 
@@ -11,7 +10,6 @@ export default function TopNav() {
   const navigate = useNavigate();
 
   const getActiveTab = () => {
-    if (location.pathname.startsWith('/termination')) return 'termination';
     if (location.pathname.startsWith('/apply')) return 'underwriting';
     return 'countries';
   };

@@ -6,8 +6,6 @@ import UnderwritingFormView from './views/UnderwritingFormView';
 import SubmissionConfirmationView from './views/SubmissionConfirmationView';
 import CountryListView from './views/CountryListView';
 import CountryDetailView from './views/CountryDetailView';
-import TerminationPoliciesView from './views/TerminationPoliciesView';
-import TerminationPolicyDetailView from './views/TerminationPolicyDetailView';
 import CreateTerminationPolicyView from './views/CreateTerminationPolicyView';
 import TopNav from './components/TopNav';
 import DevToolbar from './components/DevToolbar';
@@ -35,11 +33,7 @@ function AppContent() {
           {/* Countries */}
           <Route path="/countries" element={<CountryListView />} />
           <Route path="/countries/:code" element={<CountryDetailView />} />
-
-          {/* Termination Liability */}
-          <Route path="/termination" element={<TerminationPoliciesView />} />
-          <Route path="/termination/new" element={<CreateTerminationPolicyView />} />
-          <Route path="/termination/:policyId" element={<TerminationPolicyDetailView />} />
+          <Route path="/countries/:code/termination/new" element={<CreateTerminationPolicyView />} />
 
           {/* Underwriting */}
           <Route path="/apply" element={<IntakeFormView />} />
