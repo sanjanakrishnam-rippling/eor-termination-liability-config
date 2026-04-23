@@ -24,6 +24,8 @@ interface SeveranceSubComponent {
   valueDays?: string;
   maxCapDays?: string;
   maxCapMonthlySalary?: string;
+  mtaDaysToSecure?: string;
+  mtaContinuePay?: string;
 }
 
 interface CustomSeveranceComponent {
@@ -690,14 +692,21 @@ function SalaryBasisMultiSelect({
 }
 
 /* ─── Sub-component toggle inside Severance card ─── */
+const MTA_CONTINUE_PAY_OPTIONS = [
+  { id: 'yes', label: 'Yes' },
+  { id: 'no', label: 'No' },
+];
+
 function SeveranceSubSection({
   label,
   sub,
   onUpdate,
+  isMta = false,
 }: {
   label: string;
   sub: SeveranceSubComponent;
   onUpdate: (updates: Partial<SeveranceSubComponent>) => void;
+  isMta?: boolean;
 }) {
   return (
     <div className={`border rounded-lg transition-colors ${sub.enabled ? 'border-[#7A005D]/20 bg-[#faf8fc]' : 'border-[#e5e7eb] bg-white'}`}>
@@ -753,6 +762,27 @@ function SeveranceSubSection({
               placeholder="N/A"
             />
           </div>
+
+          {isMta && (
+            <div className="border-t border-[#e5e7eb] pt-3 mt-1">
+              <p className="text-[12px] font-semibold text-[#6b7280] uppercase tracking-wide mb-2">MTA-specific</p>
+              <div className="grid grid-cols-2 gap-3">
+                <InputText
+                  label="Days to secure MTA (excl. notice period)"
+                  value={sub.mtaDaysToSecure ?? ''}
+                  onChange={(v) => onUpdate({ mtaDaysToSecure: v })}
+                  placeholder="e.g. 30"
+                />
+                <Select
+                  label="Employee continues to receive pay?"
+                  value={sub.mtaContinuePay ?? ''}
+                  options={MTA_CONTINUE_PAY_OPTIONS}
+                  onChange={(v) => onUpdate({ mtaContinuePay: v })}
+                  placeholder="Select..."
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -822,6 +852,7 @@ function SeveranceCard({
             label={sc.label}
             sub={config.subComponents[sc.id]}
             onUpdate={(updates) => updateSub(sc.id, updates)}
+            isMta={sc.id === 'mta_severance'}
           />
         ))}
 
@@ -1076,6 +1107,10 @@ export default function CreateTerminationPolicyView() {
     if (maxDaysMatch) sub.maxCapDays = maxDaysMatch[1];
     const maxMonthlyMatch = method.match(/max monthly salary\s+(.+?)(?:;|$)/);
     if (maxMonthlyMatch) sub.maxCapMonthlySalary = maxMonthlyMatch[1].trim();
+    const mtaTimelineMatch = method.match(/MTA timeline:\s*(\d+)\s*days/);
+    if (mtaTimelineMatch) sub.mtaDaysToSecure = mtaTimelineMatch[1];
+    const mtaPayMatch = method.match(/pay continues:\s*(Yes|No)/);
+    if (mtaPayMatch) sub.mtaContinuePay = mtaPayMatch[1] === 'Yes' ? 'yes' : 'no';
     const basisMatch = method.match(/Salary basis:\s*(.+)$/);
     if (basisMatch && basisMatch[1] !== 'Not set') {
       sub.salaryBasis = parseSalaryBasisLabels(basisMatch[1]);
@@ -1132,9 +1167,12 @@ export default function CreateTerminationPolicyView() {
         const details = isRemaining
           ? `${method}`
           : `${method}: ${sub.valueDays ?? '?'} days${sub.maxCapDays ? `, max ${sub.maxCapDays} days` : ''}`;
+        const mtaSuffix = sub.mtaDaysToSecure
+          ? `; MTA timeline: ${sub.mtaDaysToSecure} days, pay continues: ${sub.mtaContinuePay === 'yes' ? 'Yes' : sub.mtaContinuePay === 'no' ? 'No' : 'Not set'}`
+          : '';
         components.push({
           name: label,
-          calculationMethod: `${details}${sub.maxCapMonthlySalary ? `; max monthly salary ${sub.maxCapMonthlySalary}` : ''}; Salary basis: ${salaryLabel(sub.salaryBasis) || 'Not set'}`,
+          calculationMethod: `${details}${sub.maxCapMonthlySalary ? `; max monthly salary ${sub.maxCapMonthlySalary}` : ''}${mtaSuffix}; Salary basis: ${salaryLabel(sub.salaryBasis) || 'Not set'}`,
         });
       };
       for (const sc of SEVERANCE_SUB_COMPONENTS) {
