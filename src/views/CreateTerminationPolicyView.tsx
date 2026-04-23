@@ -342,6 +342,99 @@ function FieldPickerPopover({
   );
 }
 
+/* ─── Pill with floating toolbar (DELETE / CHANGE / + AND) ─── */
+function ConditionPillWithToolbar({
+  pill,
+  onDelete,
+  onAndClick,
+  countryCode,
+  onReplace,
+}: {
+  pill: ConditionPill;
+  onDelete: () => void;
+  onAndClick: () => void;
+  countryCode: string;
+  onReplace: (field: string, fieldLabel: string, operator: string, value: string) => void;
+}) {
+  const [showToolbar, setShowToolbar] = useState(false);
+  const [showChangePicker, setShowChangePicker] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setShowToolbar(false);
+        setShowChangePicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  return (
+    <div ref={wrapperRef} className="relative inline-flex">
+      <button
+        type="button"
+        onClick={() => { setShowToolbar(!showToolbar); setShowChangePicker(false); }}
+        className={`inline-flex items-center gap-1.5 pl-2.5 pr-2.5 py-1.5 rounded-lg border text-[13px] transition-all cursor-pointer ${
+          showToolbar
+            ? 'bg-white border-[#7A005D] shadow-sm ring-1 ring-[#7A005D]/20'
+            : 'bg-[#f5f5f5] border-[#e5e7eb] hover:border-[#c7c7c7]'
+        }`}
+      >
+        <PillIcon />
+        <span className="text-[#1a1a1a]">{pill.fieldLabel} → {pill.value}</span>
+      </button>
+
+      {showToolbar && (
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-50 flex items-center bg-[#1a1a1a] rounded-lg shadow-xl overflow-hidden">
+          <button
+            onClick={() => { onDelete(); setShowToolbar(false); }}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-white text-[12px] font-semibold uppercase tracking-wide hover:bg-[#333] transition-colors border-r border-[#444]"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete
+          </button>
+          <button
+            onClick={() => setShowChangePicker(!showChangePicker)}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-white text-[12px] font-semibold uppercase tracking-wide hover:bg-[#333] transition-colors border-r border-[#444]"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            Change
+          </button>
+          <button
+            onClick={() => { onAndClick(); setShowToolbar(false); }}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-white text-[12px] font-semibold uppercase tracking-wide hover:bg-[#333] transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            And
+          </button>
+        </div>
+      )}
+
+      {showChangePicker && (
+        <div className="absolute left-0 top-full mt-1 z-[60]">
+          <FieldPickerPopover
+            onAdd={(f, fl, op, v) => {
+              onReplace(f, fl, op, v);
+              setShowToolbar(false);
+              setShowChangePicker(false);
+            }}
+            onClose={() => setShowChangePicker(false)}
+            countryCode={countryCode}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Add Condition Modal ─── */
 function AddConditionModal({
   onSave,
@@ -363,26 +456,32 @@ function AddConditionModal({
       { id: `pill-${pillIdCounter++}`, field: 'country', fieldLabel: 'Country', operator: 'equals', value: countryName },
     ];
   });
-  const [showPicker, setShowPicker] = useState(false);
+  const [showAddPicker, setShowAddPicker] = useState(false);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (showPicker) setShowPicker(false);
+        if (showAddPicker) setShowAddPicker(false);
         else onClose();
       }
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [onClose, showPicker]);
+  }, [onClose, showAddPicker]);
 
   const addPill = (field: string, fieldLabel: string, operator: string, value: string) => {
     setConditions((prev) => [...prev, { id: `pill-${pillIdCounter++}`, field, fieldLabel, operator, value }]);
-    setShowPicker(false);
+    setShowAddPicker(false);
   };
 
   const removePill = (id: string) => {
     setConditions((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const replacePill = (id: string, field: string, fieldLabel: string, operator: string, value: string) => {
+    setConditions((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, field, fieldLabel, operator, value } : p))
+    );
   };
 
   return (
@@ -401,7 +500,7 @@ function AddConditionModal({
           </button>
         </div>
 
-        <p className="px-6 pb-4 text-[13px] text-[#6b7280]">Define which employees this policy applies to.</p>
+        <p className="px-6 pb-4 text-[13px] text-[#6b7280]">Click a condition to delete, change, or add another with AND.</p>
 
         <div className="flex-1 overflow-y-auto px-6 pb-4">
           <div className="border border-[#e5e7eb] rounded-lg p-4">
@@ -412,38 +511,25 @@ function AddConditionModal({
                 {conditions.map((pill, idx) => (
                   <span key={pill.id} className="contents">
                     {idx > 0 && <AndSeparator />}
-                    <span className="inline-flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-md bg-[#f5f5f5] border border-[#e5e7eb] text-[13px]">
-                      <PillIcon />
-                      <span className="text-[#1a1a1a]">{pill.fieldLabel} → {pill.value}</span>
-                      <button
-                        onClick={() => removePill(pill.id)}
-                        className="p-0.5 rounded hover:bg-[#e5e7eb] text-[#9d9d9d] hover:text-[#1a1a1a] transition-colors"
-                      >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </span>
+                    <ConditionPillWithToolbar
+                      pill={pill}
+                      onDelete={() => removePill(pill.id)}
+                      onAndClick={() => setShowAddPicker(true)}
+                      countryCode={countryCode}
+                      onReplace={(f, fl, op, v) => replacePill(pill.id, f, fl, op, v)}
+                    />
                   </span>
                 ))}
               </div>
 
-              <button
-                onClick={() => setShowPicker(!showPicker)}
-                className="mt-3 inline-flex items-center justify-center w-6 h-6 rounded-full border border-[#7A005D] text-[#7A005D] hover:bg-[#7A005D] hover:text-white transition-colors"
-                title="Add condition"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-              </button>
-
-              {showPicker && (
-                <FieldPickerPopover
-                  onAdd={addPill}
-                  onClose={() => setShowPicker(false)}
-                  countryCode={countryCode}
-                />
+              {showAddPicker && (
+                <div className="relative mt-2">
+                  <FieldPickerPopover
+                    onAdd={addPill}
+                    onClose={() => setShowAddPicker(false)}
+                    countryCode={countryCode}
+                  />
+                </div>
               )}
             </div>
           </div>
