@@ -23,6 +23,7 @@ interface SeveranceSubComponent {
   method?: string;
   valueDays?: string;
   maxCapDays?: string;
+  maxCapMonthlySalary?: string;
 }
 
 interface SeveranceConfig {
@@ -731,7 +732,13 @@ function SeveranceSubSection({
               label="Maximum cap on days offered"
               value={sub.maxCapDays ?? ''}
               onChange={(v) => onUpdate({ maxCapDays: v })}
-              placeholder="e.g. 365"
+              placeholder="N/A"
+            />
+            <InputText
+              label="Maximum cap on monthly salary"
+              value={sub.maxCapMonthlySalary ?? ''}
+              onChange={(v) => onUpdate({ maxCapMonthlySalary: v })}
+              placeholder="N/A"
             />
           </div>
         </div>
