@@ -26,6 +26,12 @@ interface SeveranceSubComponent {
   maxCapMonthlySalary?: string;
 }
 
+interface CustomSeveranceComponent {
+  id: string;
+  label: string;
+  config: SeveranceSubComponent;
+}
+
 interface SeveranceConfig {
   type: 'severance';
   salaryBasis: string[];
@@ -34,6 +40,7 @@ interface SeveranceConfig {
     redundancy_pay: SeveranceSubComponent;
     gratuity: SeveranceSubComponent;
   };
+  customComponents: CustomSeveranceComponent[];
 }
 
 interface VacationPayConfig {
@@ -67,6 +74,7 @@ function createEmptySeverance(): SeveranceConfig {
       redundancy_pay: { enabled: false, salaryBasis: [] },
       gratuity: { enabled: false, salaryBasis: [] },
     },
+    customComponents: [],
   };
 }
 
@@ -755,6 +763,9 @@ function SeveranceCard({
   config: SeveranceConfig;
   onChange: (updated: SeveranceConfig) => void;
 }) {
+  const [newComponentName, setNewComponentName] = useState('');
+  const [showAddInput, setShowAddInput] = useState(false);
+
   const updateSub = (key: keyof SeveranceConfig['subComponents'], updates: Partial<SeveranceSubComponent>) => {
     onChange({
       ...config,
@@ -762,6 +773,35 @@ function SeveranceCard({
         ...config.subComponents,
         [key]: { ...config.subComponents[key], ...updates },
       },
+    });
+  };
+
+  const updateCustom = (id: string, updates: Partial<SeveranceSubComponent>) => {
+    onChange({
+      ...config,
+      customComponents: config.customComponents.map((c) =>
+        c.id === id ? { ...c, config: { ...c.config, ...updates } } : c
+      ),
+    });
+  };
+
+  const addCustomComponent = () => {
+    if (!newComponentName.trim()) return;
+    onChange({
+      ...config,
+      customComponents: [
+        ...config.customComponents,
+        { id: `custom-${Date.now()}`, label: newComponentName.trim(), config: { enabled: true, salaryBasis: [] } },
+      ],
+    });
+    setNewComponentName('');
+    setShowAddInput(false);
+  };
+
+  const removeCustomComponent = (id: string) => {
+    onChange({
+      ...config,
+      customComponents: config.customComponents.filter((c) => c.id !== id),
     });
   };
 
@@ -780,6 +820,68 @@ function SeveranceCard({
             onUpdate={(updates) => updateSub(sc.id, updates)}
           />
         ))}
+
+        {config.customComponents.map((cc) => (
+          <div key={cc.id} className="relative">
+            <SeveranceSubSection
+              label={cc.label}
+              sub={cc.config}
+              onUpdate={(updates) => updateCustom(cc.id, updates)}
+            />
+            <button
+              type="button"
+              onClick={() => removeCustomComponent(cc.id)}
+              className="absolute top-3 right-3 p-1 rounded hover:bg-[#fef2f2] text-[#9d9d9d] hover:text-[#bf0f0f] transition-colors"
+              title="Remove component"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4">
+        {showAddInput ? (
+          <div className="flex items-center gap-2">
+            <input
+              autoFocus
+              type="text"
+              value={newComponentName}
+              onChange={(e) => setNewComponentName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') addCustomComponent(); if (e.key === 'Escape') { setShowAddInput(false); setNewComponentName(''); } }}
+              placeholder="Component name, e.g. Seniority Premium"
+              className="flex-1 h-9 px-3 text-[13px] rounded-lg border border-[#d5d5d5] outline-none focus:border-[#7A005D] focus:ring-1 focus:ring-[#7A005D]/20"
+            />
+            <button
+              type="button"
+              onClick={addCustomComponent}
+              disabled={!newComponentName.trim()}
+              className="h-9 px-4 rounded-lg bg-[#7A005D] text-white text-[12px] font-medium disabled:opacity-40 hover:bg-[#65004d] transition-colors"
+            >
+              Add
+            </button>
+            <button
+              type="button"
+              onClick={() => { setShowAddInput(false); setNewComponentName(''); }}
+              className="h-9 px-3 rounded-lg border border-[#d5d5d5] text-[13px] text-[#6b7280] hover:bg-[#f3f4f6] transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowAddInput(true)}
+            className="flex items-center gap-1.5 text-[13px] font-medium text-[#7A005D] hover:text-[#5c0046] transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add custom component
+          </button>
+        )}
       </div>
     </section>
   );
@@ -911,18 +1013,22 @@ export default function CreateTerminationPolicyView() {
       const capSuffix = vacationPayConfig.maxCapDays ? `; Max cap: ${vacationPayConfig.maxCapDays} days` : '';
       components.push({ name: 'Vacation Pay', calculationMethod: `${min}${capSuffix}; Salary basis: ${salaryLabel(vacationPayConfig.salaryBasis) || 'Not set'}` });
     } else {
+      const formatSub = (label: string, sub: SeveranceSubComponent) => {
+        const method = sub.method === 'per_years_of_service' ? 'Per years of service' : 'Fixed';
+        components.push({
+          name: label,
+          calculationMethod: `${method}: ${sub.valueDays ?? '?'} days${sub.maxCapDays ? `, max ${sub.maxCapDays} days` : ''}`,
+        });
+      };
       for (const sc of SEVERANCE_SUB_COMPONENTS) {
         const sub = severanceConfig.subComponents[sc.id];
-        if (sub.enabled) {
-          const method = sub.method === 'per_years_of_service' ? 'Per years of service' : 'Fixed';
-          components.push({
-            name: sc.label,
-            calculationMethod: `${method}: ${sub.valueDays ?? '?'} days${sub.maxCapDays ? `, max ${sub.maxCapDays} days` : ''}`,
-          });
-        }
+        if (sub.enabled) formatSub(sc.label, sub);
+      }
+      for (const cc of severanceConfig.customComponents) {
+        if (cc.config.enabled) formatSub(cc.label, cc.config);
       }
       if (components.length === 0) {
-        components.push({ name: 'Severance', calculationMethod: `Salary basis: ${salaryLabel(severanceConfig.salaryBasis) || 'Not set'}` });
+        components.push({ name: 'Severance', calculationMethod: 'No components configured' });
       }
     }
 
