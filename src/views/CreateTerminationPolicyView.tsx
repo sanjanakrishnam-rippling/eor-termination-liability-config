@@ -17,6 +17,7 @@ interface ConditionPill {
 
 interface SeveranceSubComponent {
   enabled: boolean;
+  salaryBasis: string[];
   method?: string;
   valueDays?: string;
   maxCapDays?: string;
@@ -60,9 +61,9 @@ function createEmptySeverance(): SeveranceConfig {
     type: 'severance',
     salaryBasis: [],
     subComponents: {
-      mta_severance: { enabled: false },
-      redundancy_pay: { enabled: false },
-      gratuity: { enabled: false },
+      mta_severance: { enabled: false, salaryBasis: [] },
+      redundancy_pay: { enabled: false, salaryBasis: [] },
+      gratuity: { enabled: false, salaryBasis: [] },
     },
   };
 }
@@ -663,7 +664,11 @@ function SeveranceSubSection({
       </button>
 
       {sub.enabled && (
-        <div className="px-4 pb-4 pt-1">
+        <div className="px-4 pb-4 pt-1 flex flex-col gap-3">
+          <SalaryBasisMultiSelect
+            selected={sub.salaryBasis}
+            onChange={(ids) => onUpdate({ salaryBasis: ids })}
+          />
           <div className="grid grid-cols-2 gap-3">
             <Select
               label="Method"
@@ -719,14 +724,7 @@ function SeveranceCard({
   return (
     <section className="bg-white border border-[#e5e7eb] rounded-lg p-6">
       <SectionLabel>Severance Components</SectionLabel>
-      <SectionDescription>Select the severance sub-components and configure each one.</SectionDescription>
-
-      <div className="mb-5">
-        <SalaryBasisMultiSelect
-          selected={config.salaryBasis}
-          onChange={(ids) => onChange({ ...config, salaryBasis: ids })}
-        />
-      </div>
+      <SectionDescription>Select the severance sub-components and configure each one, including their salary basis.</SectionDescription>
 
       <p className="text-[13px] font-medium text-[#374151] mb-3">Sub-components</p>
       <div className="flex flex-col gap-3">
