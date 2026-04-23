@@ -11,6 +11,7 @@ interface ConditionPill {
   id: string;
   field: string;
   fieldLabel: string;
+  operator: string;
   value: string;
 }
 
@@ -67,23 +68,75 @@ function createEmptySeverance(): SeveranceConfig {
 }
 
 const CONDITION_FIELD_OPTIONS = [
+  { id: 'is_eor_employee', label: 'Is EOR Employee' },
+  { id: 'country', label: 'Country' },
+  { id: 'before_probationary_period', label: 'Before Probationary Period' },
   { id: 'contract_type', label: 'Contract Type' },
   { id: 'province', label: 'Province' },
-  { id: 'country', label: 'Country' },
   { id: 'tenure', label: 'Tenure' },
-  { id: 'salary', label: 'Salary' },
-  { id: 'entity_type', label: 'Entity Type' },
 ];
 
-const FIELD_VALUE_OPTIONS: Record<string, { id: string; label: string }[]> = {
-  contract_type: [
-    { id: 'Indefinite', label: 'Indefinite' },
-    { id: 'Fixed Term', label: 'Fixed Term' },
+const TENURE_OPERATOR_OPTIONS = [
+  { id: 'equals', label: '=' },
+  { id: 'greater_than', label: '>' },
+  { id: 'greater_than_or_equal', label: '>=' },
+  { id: 'less_than', label: '<' },
+  { id: 'less_than_or_equal', label: '<=' },
+];
+
+const PROVINCE_OPTIONS: Record<string, { id: string; label: string }[]> = {
+  AR: [
+    { id: 'Buenos Aires', label: 'Buenos Aires' },
+    { id: 'CABA', label: 'Ciudad Autónoma de Buenos Aires' },
+    { id: 'Córdoba', label: 'Córdoba' },
+    { id: 'Santa Fe', label: 'Santa Fe' },
+    { id: 'Mendoza', label: 'Mendoza' },
+    { id: 'Tucumán', label: 'Tucumán' },
+    { id: 'Salta', label: 'Salta' },
+    { id: 'Misiones', label: 'Misiones' },
+    { id: 'Chaco', label: 'Chaco' },
+    { id: 'Entre Ríos', label: 'Entre Ríos' },
   ],
-  entity_type: [
-    { id: 'EOR', label: 'EOR' },
-    { id: 'COR', label: 'COR' },
-    { id: 'BLE', label: 'BLE' },
+  CA: [
+    { id: 'Ontario', label: 'Ontario' },
+    { id: 'Quebec', label: 'Quebec' },
+    { id: 'British Columbia', label: 'British Columbia' },
+    { id: 'Alberta', label: 'Alberta' },
+    { id: 'Manitoba', label: 'Manitoba' },
+    { id: 'Saskatchewan', label: 'Saskatchewan' },
+    { id: 'Nova Scotia', label: 'Nova Scotia' },
+    { id: 'New Brunswick', label: 'New Brunswick' },
+  ],
+  IN: [
+    { id: 'Maharashtra', label: 'Maharashtra' },
+    { id: 'Karnataka', label: 'Karnataka' },
+    { id: 'Tamil Nadu', label: 'Tamil Nadu' },
+    { id: 'Delhi', label: 'Delhi' },
+    { id: 'Telangana', label: 'Telangana' },
+    { id: 'West Bengal', label: 'West Bengal' },
+    { id: 'Gujarat', label: 'Gujarat' },
+    { id: 'Rajasthan', label: 'Rajasthan' },
+  ],
+  BR: [
+    { id: 'São Paulo', label: 'São Paulo' },
+    { id: 'Rio de Janeiro', label: 'Rio de Janeiro' },
+    { id: 'Minas Gerais', label: 'Minas Gerais' },
+    { id: 'Bahia', label: 'Bahia' },
+    { id: 'Paraná', label: 'Paraná' },
+  ],
+};
+
+const FIELD_VALUE_OPTIONS: Record<string, { id: string; label: string }[]> = {
+  is_eor_employee: [
+    { id: 'True', label: 'True' },
+  ],
+  before_probationary_period: [
+    { id: 'True', label: 'True' },
+    { id: 'False', label: 'False' },
+  ],
+  contract_type: [
+    { id: 'Fixed', label: 'Fixed' },
+    { id: 'Indefinite', label: 'Indefinite' },
   ],
 };
 
@@ -146,14 +199,17 @@ function AndSeparator() {
 function FieldPickerPopover({
   onAdd,
   onClose,
+  countryCode,
 }: {
-  onAdd: (field: string, fieldLabel: string, value: string) => void;
+  onAdd: (field: string, fieldLabel: string, operator: string, value: string) => void;
   onClose: () => void;
+  countryCode: string;
 }) {
   const [step, setStep] = useState<'field' | 'value'>('field');
   const [selectedField, setSelectedField] = useState('');
   const [selectedFieldLabel, setSelectedFieldLabel] = useState('');
-  const [textValue, setTextValue] = useState('');
+  const [tenureOperator, setTenureOperator] = useState('greater_than_or_equal');
+  const [tenureValue, setTenureValue] = useState('');
   const popoverRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -166,8 +222,6 @@ function FieldPickerPopover({
     return () => document.removeEventListener('mousedown', handleOutside);
   }, [onClose]);
 
-  const hasFixedValues = selectedField && FIELD_VALUE_OPTIONS[selectedField];
-
   const handleFieldClick = (id: string, label: string) => {
     setSelectedField(id);
     setSelectedFieldLabel(label);
@@ -175,19 +229,31 @@ function FieldPickerPopover({
   };
 
   const handleValueClick = (value: string) => {
-    onAdd(selectedField, selectedFieldLabel, value);
+    onAdd(selectedField, selectedFieldLabel, 'equals', value);
   };
 
-  const handleTextSubmit = () => {
-    if (textValue.trim()) {
-      onAdd(selectedField, selectedFieldLabel, textValue.trim());
+  const handleTenureSubmit = () => {
+    if (tenureValue.trim()) {
+      const opLabel = TENURE_OPERATOR_OPTIONS.find((o) => o.id === tenureOperator)?.label ?? '>=';
+      onAdd(selectedField, selectedFieldLabel, tenureOperator, `${opLabel} ${tenureValue.trim()} years`);
     }
   };
+
+  const goBack = () => {
+    setStep('field');
+    setSelectedField('');
+    setTenureValue('');
+  };
+
+  const provinces = PROVINCE_OPTIONS[countryCode] ?? [];
+  const fixedValues = FIELD_VALUE_OPTIONS[selectedField];
+  const isTenure = selectedField === 'tenure';
+  const isProvince = selectedField === 'province';
 
   return (
     <div
       ref={popoverRef}
-      className="absolute left-0 top-full mt-1 z-50 w-[240px] bg-white border border-[#e5e7eb] rounded-lg shadow-lg overflow-hidden"
+      className="absolute left-0 top-full mt-1 z-50 w-[260px] bg-white border border-[#e5e7eb] rounded-lg shadow-lg overflow-hidden"
     >
       {step === 'field' ? (
         <>
@@ -207,18 +273,58 @@ function FieldPickerPopover({
       ) : (
         <>
           <div className="px-3 py-2 border-b border-[#f1f1f1] flex items-center gap-2">
-            <button
-              onClick={() => { setStep('field'); setSelectedField(''); setTextValue(''); }}
-              className="text-[#6b7280] hover:text-[#1a1a1a] transition-colors"
-            >
+            <button onClick={goBack} className="text-[#6b7280] hover:text-[#1a1a1a] transition-colors">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <p className="text-[11px] font-semibold text-[#9d9d9d] uppercase tracking-wide">{selectedFieldLabel}</p>
           </div>
-          {hasFixedValues ? (
-            FIELD_VALUE_OPTIONS[selectedField].map((v) => (
+
+          {isTenure ? (
+            <div className="p-3 flex flex-col gap-2">
+              <select
+                value={tenureOperator}
+                onChange={(e) => setTenureOperator(e.target.value)}
+                className="h-9 px-2 text-[13px] rounded-lg border border-[#d5d5d5] outline-none focus:border-[#7A005D]"
+              >
+                {TENURE_OPERATOR_OPTIONS.map((o) => (
+                  <option key={o.id} value={o.id}>{o.label}</option>
+                ))}
+              </select>
+              <div className="flex gap-2">
+                <input
+                  autoFocus
+                  type="number"
+                  value={tenureValue}
+                  onChange={(e) => setTenureValue(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleTenureSubmit(); }}
+                  placeholder="Years"
+                  className="flex-1 h-9 px-3 text-[13px] rounded-lg border border-[#d5d5d5] outline-none focus:border-[#7A005D] focus:ring-1 focus:ring-[#7A005D]/20"
+                />
+                <button
+                  onClick={handleTenureSubmit}
+                  disabled={!tenureValue.trim()}
+                  className="h-9 px-3 rounded-lg bg-[#7A005D] text-white text-[12px] font-medium disabled:opacity-40 hover:bg-[#65004d] transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          ) : isProvince && provinces.length > 0 ? (
+            <div className="max-h-[220px] overflow-y-auto">
+              {provinces.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => handleValueClick(p.label)}
+                  className="w-full text-left px-3 py-2.5 text-[13px] text-[#1a1a1a] hover:bg-[#f9fafb] transition-colors border-b border-[#f7f7f7] last:border-b-0"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          ) : fixedValues ? (
+            fixedValues.map((v) => (
               <button
                 key={v.id}
                 onClick={() => handleValueClick(v.label)}
@@ -228,32 +334,7 @@ function FieldPickerPopover({
               </button>
             ))
           ) : (
-            <div className="p-3">
-              <div className="flex gap-2">
-                <input
-                  autoFocus
-                  type="text"
-                  value={textValue}
-                  onChange={(e) => setTextValue(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleTextSubmit(); }}
-                  placeholder={
-                    selectedField === 'tenure' ? 'e.g. >= 5 years' :
-                    selectedField === 'salary' ? 'e.g. >= 50000' :
-                    selectedField === 'province' ? 'e.g. Ontario' :
-                    selectedField === 'country' ? 'e.g. Canada' :
-                    'Enter value...'
-                  }
-                  className="flex-1 h-9 px-3 text-[13px] rounded-lg border border-[#d5d5d5] outline-none focus:border-[#7A005D] focus:ring-1 focus:ring-[#7A005D]/20"
-                />
-                <button
-                  onClick={handleTextSubmit}
-                  disabled={!textValue.trim()}
-                  className="h-9 px-3 rounded-lg bg-[#7A005D] text-white text-[12px] font-medium disabled:opacity-40 hover:bg-[#65004d] transition-colors"
-                >
-                  Add
-                </button>
-              </div>
-            </div>
+            <div className="p-3 text-[13px] text-[#6b7280]">No options available</div>
           )}
         </>
       )}
@@ -265,48 +346,51 @@ function FieldPickerPopover({
 function AddConditionModal({
   onSave,
   onClose,
-  existingIncludes,
-  existingExcepts,
+  existingConditions,
+  countryCode,
+  countryName,
 }: {
-  onSave: (includes: ConditionPill[], excepts: ConditionPill[]) => void;
+  onSave: (conditions: ConditionPill[]) => void;
   onClose: () => void;
-  existingIncludes: ConditionPill[];
-  existingExcepts: ConditionPill[];
+  existingConditions: ConditionPill[];
+  countryCode: string;
+  countryName: string;
 }) {
-  const [includes, setIncludes] = useState<ConditionPill[]>(existingIncludes);
-  const [excepts, setExcepts] = useState<ConditionPill[]>(existingExcepts);
-  const [pickerTarget, setPickerTarget] = useState<'include' | 'except' | null>(null);
+  const [conditions, setConditions] = useState<ConditionPill[]>(() => {
+    if (existingConditions.length > 0) return existingConditions;
+    return [
+      { id: `pill-${pillIdCounter++}`, field: 'is_eor_employee', fieldLabel: 'Is EOR Employee', operator: 'equals', value: 'True' },
+      { id: `pill-${pillIdCounter++}`, field: 'country', fieldLabel: 'Country', operator: 'equals', value: countryName },
+    ];
+  });
+  const [showPicker, setShowPicker] = useState(false);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (pickerTarget) setPickerTarget(null);
+        if (showPicker) setShowPicker(false);
         else onClose();
       }
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [onClose, pickerTarget]);
+  }, [onClose, showPicker]);
 
-  const addPill = (target: 'include' | 'except', field: string, fieldLabel: string, value: string) => {
-    const pill: ConditionPill = { id: `pill-${pillIdCounter++}`, field, fieldLabel, value };
-    if (target === 'include') setIncludes((prev) => [...prev, pill]);
-    else setExcepts((prev) => [...prev, pill]);
-    setPickerTarget(null);
+  const addPill = (field: string, fieldLabel: string, operator: string, value: string) => {
+    setConditions((prev) => [...prev, { id: `pill-${pillIdCounter++}`, field, fieldLabel, operator, value }]);
+    setShowPicker(false);
   };
 
-  const removePill = (id: string, from: 'include' | 'except') => {
-    if (from === 'include') setIncludes((prev) => prev.filter((p) => p.id !== id));
-    else setExcepts((prev) => prev.filter((p) => p.id !== id));
+  const removePill = (id: string) => {
+    setConditions((prev) => prev.filter((p) => p.id !== id));
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
       <div className="relative bg-white rounded-xl shadow-2xl w-[560px] max-h-[80vh] flex flex-col">
-        {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-2">
-          <h2 className="text-[18px] font-bold text-[#1a1a1a]">Add condition</h2>
+          <h2 className="text-[18px] font-bold text-[#1a1a1a]">Conditions</h2>
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-[#f3f4f6] transition-colors text-[#6b7280] hover:text-[#1a1a1a]"
@@ -317,78 +401,22 @@ function AddConditionModal({
           </button>
         </div>
 
-        <p className="px-6 pb-4 text-[13px] text-[#6b7280]">Add condition</p>
+        <p className="px-6 pb-4 text-[13px] text-[#6b7280]">Define which employees this policy applies to.</p>
 
-        {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 pb-4">
-          <div className="border border-[#e5e7eb] rounded-lg">
-            {/* Include section */}
-            <div className="p-4 pb-6">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[14px] font-semibold text-[#1a1a1a]">Include people who are</p>
-                <button className="p-1 rounded hover:bg-[#f3f4f6] text-[#6b7280]">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <circle cx="12" cy="6" r="1.5" />
-                    <circle cx="12" cy="12" r="1.5" />
-                    <circle cx="12" cy="18" r="1.5" />
-                  </svg>
-                </button>
-              </div>
+          <div className="border border-[#e5e7eb] rounded-lg p-4">
+            <p className="text-[14px] font-semibold text-[#1a1a1a] mb-3">Include people who are</p>
 
-              {/* Pills with AND + clickable empty zone */}
-              <div className="relative min-h-[80px]">
-                <div className="flex flex-wrap items-center gap-2">
-                  {includes.map((pill, idx) => (
-                    <span key={pill.id} className="contents">
-                      {idx > 0 && <AndSeparator />}
-                      <span className="inline-flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-md bg-[#f5f5f5] border border-[#e5e7eb] text-[13px]">
-                        <PillIcon />
-                        <span className="text-[#1a1a1a]">{pill.fieldLabel} → {pill.value}</span>
-                        <button
-                          onClick={() => removePill(pill.id, 'include')}
-                          className="p-0.5 rounded hover:bg-[#e5e7eb] text-[#9d9d9d] hover:text-[#1a1a1a] transition-colors"
-                        >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </span>
-                    </span>
-                  ))}
-                </div>
-
-                {/* Clickable area to add */}
-                <button
-                  onClick={() => setPickerTarget(pickerTarget === 'include' ? null : 'include')}
-                  className="mt-3 inline-flex items-center gap-1 text-[12px] font-medium text-[#7A005D] hover:text-[#5c0046] transition-colors py-1"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Add condition
-                </button>
-
-                {pickerTarget === 'include' && (
-                  <FieldPickerPopover
-                    onAdd={(f, fl, v) => addPill('include', f, fl, v)}
-                    onClose={() => setPickerTarget(null)}
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Except section */}
-            <div className="border-t border-[#e5e7eb] px-4 py-3 relative">
-              <div className="flex flex-wrap items-center gap-2 min-h-[28px]">
-                <span className="text-[13px] font-semibold text-[#1a1a1a]">Except:</span>
-                {excepts.map((pill, idx) => (
+            <div className="relative min-h-[60px]">
+              <div className="flex flex-wrap items-center gap-2">
+                {conditions.map((pill, idx) => (
                   <span key={pill.id} className="contents">
                     {idx > 0 && <AndSeparator />}
                     <span className="inline-flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-md bg-[#f5f5f5] border border-[#e5e7eb] text-[13px]">
                       <PillIcon />
                       <span className="text-[#1a1a1a]">{pill.fieldLabel} → {pill.value}</span>
                       <button
-                        onClick={() => removePill(pill.id, 'except')}
+                        onClick={() => removePill(pill.id)}
                         className="p-0.5 rounded hover:bg-[#e5e7eb] text-[#9d9d9d] hover:text-[#1a1a1a] transition-colors"
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -398,29 +426,34 @@ function AddConditionModal({
                     </span>
                   </span>
                 ))}
-                <button
-                  onClick={() => setPickerTarget(pickerTarget === 'except' ? null : 'except')}
-                  className="text-[12px] text-[#9d9d9d] hover:text-[#6b7280] transition-colors"
-                >
-                  {excepts.length > 0 ? '+ Add' : 'Click to add exceptions...'}
-                </button>
               </div>
-              {pickerTarget === 'except' && (
+
+              <button
+                onClick={() => setShowPicker(!showPicker)}
+                className="mt-3 inline-flex items-center justify-center w-6 h-6 rounded-full border border-[#7A005D] text-[#7A005D] hover:bg-[#7A005D] hover:text-white transition-colors"
+                title="Add condition"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+
+              {showPicker && (
                 <FieldPickerPopover
-                  onAdd={(f, fl, v) => addPill('except', f, fl, v)}
-                  onClose={() => setPickerTarget(null)}
+                  onAdd={addPill}
+                  onClose={() => setShowPicker(false)}
+                  countryCode={countryCode}
                 />
               )}
             </div>
           </div>
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e5e7eb]">
           <Button appearance="secondary" size="md" onClick={onClose}>
             Cancel
           </Button>
-          <Button appearance="primary" size="md" onClick={() => onSave(includes, excepts)}>
+          <Button appearance="primary" size="md" onClick={() => onSave(conditions)}>
             Save
           </Button>
         </div>
@@ -705,17 +738,15 @@ export default function CreateTerminationPolicyView() {
 
   const [policyType, setPolicyType] = useState<PolicyType | null>(null);
   const [policyName, setPolicyName] = useState('');
-  const [includes, setIncludes] = useState<ConditionPill[]>([]);
-  const [excepts, setExcepts] = useState<ConditionPill[]>([]);
+  const [conditions, setConditions] = useState<ConditionPill[]>([]);
   const [showConditionModal, setShowConditionModal] = useState(false);
 
   const [severanceConfig, setSeveranceConfig] = useState<SeveranceConfig>(createEmptySeverance());
   const [vacationPayConfig, setVacationPayConfig] = useState<VacationPayConfig>({ type: 'vacation_pay', salaryBasis: [] });
   const [noticePeriodConfig, setNoticePeriodConfig] = useState<NoticePeriodConfig>({ type: 'notice_period_pay', salaryBasis: [] });
 
-  const handleSaveConditions = (newIncludes: ConditionPill[], newExcepts: ConditionPill[]) => {
-    setIncludes(newIncludes);
-    setExcepts(newExcepts);
+  const handleSaveConditions = (newConditions: ConditionPill[]) => {
+    setConditions(newConditions);
     setShowConditionModal(false);
   };
 
@@ -727,7 +758,7 @@ export default function CreateTerminationPolicyView() {
     const pillToCondition = (pill: ConditionPill): MemberCondition => ({
       entity: 'Employee',
       field: `${pill.fieldLabel}?`,
-      operator: 'equals',
+      operator: pill.operator,
       value: pill.value,
     });
 
@@ -737,8 +768,8 @@ export default function CreateTerminationPolicyView() {
           { entity: 'Employee', field: 'Is an EOR Employee?', operator: 'equals', value: 'True' },
           { entity: 'Employee', field: 'Country?', operator: 'equals', value: countryName },
         ]
-      : includes.map(pillToCondition);
-    const exceptFor: MemberCondition[] = isFixedScope ? [] : excepts.map(pillToCondition);
+      : conditions.map(pillToCondition);
+    const exceptFor: MemberCondition[] = [];
 
     const components: PolicyComponent[] = [];
     const salaryLabel = (ids: string[]) =>
@@ -944,12 +975,11 @@ export default function CreateTerminationPolicyView() {
             <SectionLabel>Who does this apply to?</SectionLabel>
             <SectionDescription>Define the conditions that determine which employees this policy covers.</SectionDescription>
 
-            {includes.length > 0 ? (
+            {conditions.length > 0 ? (
               <div className="border border-[#e5e7eb] rounded-lg mb-4">
                 <div className="p-4">
-                  <p className="text-[13px] font-semibold text-[#1a1a1a] mb-2">Include people who are</p>
                   <div className="flex flex-wrap items-center gap-2">
-                    {includes.map((pill, idx) => (
+                    {conditions.map((pill, idx) => (
                       <span key={pill.id} className="contents">
                         {idx > 0 && <AndSeparator />}
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#f5f5f5] border border-[#e5e7eb] text-[13px]">
@@ -960,22 +990,6 @@ export default function CreateTerminationPolicyView() {
                     ))}
                   </div>
                 </div>
-                {excepts.length > 0 && (
-                  <div className="border-t border-[#e5e7eb] px-4 py-3">
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <span className="text-[13px] font-semibold text-[#1a1a1a]">Except:</span>
-                      {excepts.map((pill, idx) => (
-                        <span key={pill.id} className="contents">
-                          {idx > 0 && <AndSeparator />}
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#f5f5f5] border border-[#e5e7eb] text-[13px]">
-                            <PillIcon />
-                            <span className="text-[#1a1a1a]">{pill.fieldLabel} → {pill.value}</span>
-                          </span>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             ) : null}
 
@@ -986,7 +1000,7 @@ export default function CreateTerminationPolicyView() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              {includes.length > 0 ? 'Edit conditions' : 'Add Condition'}
+              {conditions.length > 0 ? 'Edit conditions' : 'Add Condition'}
             </button>
           </section>
         )}
@@ -1017,8 +1031,9 @@ export default function CreateTerminationPolicyView() {
         <AddConditionModal
           onSave={handleSaveConditions}
           onClose={() => setShowConditionModal(false)}
-          existingIncludes={includes}
-          existingExcepts={excepts}
+          existingConditions={conditions}
+          countryCode={code ?? ''}
+          countryName={countryName}
         />
       )}
     </div>
