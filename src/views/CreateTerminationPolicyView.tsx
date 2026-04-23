@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { COUNTRIES } from '../data/countries';
-import { MemberCondition, PolicyComponent } from '../data/terminationPolicies';
+import { MemberCondition, PolicyComponent, PolicyType } from '../data/terminationPolicies';
 import { usePolicyStore } from '../store/policyStore';
 import Button from '../components/Button';
 import Select from '../components/Select';
@@ -56,7 +56,6 @@ interface NoticePeriodConfig {
   salaryBasis: string[];
 }
 
-type PolicyType = 'severance' | 'vacation_pay' | 'notice_period_pay';
 type ComponentConfig = SeveranceConfig | VacationPayConfig | NoticePeriodConfig;
 
 const SEVERANCE_SUB_COMPONENTS = [
@@ -1035,6 +1034,7 @@ export default function CreateTerminationPolicyView() {
     store.addPolicy(code, {
       id: `${code.toLowerCase()}-custom-${Date.now()}`,
       name: policyName.trim(),
+      policyType,
       members,
       exceptFor,
       components,

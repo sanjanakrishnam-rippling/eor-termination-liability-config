@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { COUNTRIES } from '../data/countries';
-import { TerminationPolicy, MemberCondition } from '../data/terminationPolicies';
+import { TerminationPolicy, MemberCondition, POLICY_TYPE_LABELS } from '../data/terminationPolicies';
 import { usePolicyStore } from '../store/policyStore';
 import Button from '../components/Button';
 
@@ -53,15 +53,34 @@ function ConditionPill({ condition }: { condition: MemberCondition }) {
   );
 }
 
+const POLICY_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
+  severance: { bg: '#fef3c7', text: '#92400e' },
+  vacation_pay: { bg: '#dbeafe', text: '#1e40af' },
+  notice_period_pay: { bg: '#ede9fe', text: '#5b21b6' },
+};
+
 function PolicyCard({ policy, onDelete }: { policy: TerminationPolicy; onDelete: (id: string) => void }) {
+  const typeLabel = policy.policyType ? POLICY_TYPE_LABELS[policy.policyType] : null;
+  const typeColor = policy.policyType ? POLICY_TYPE_COLORS[policy.policyType] : null;
+
   return (
     <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
       <div className="flex items-start justify-between gap-6">
         {/* Left side */}
         <div className="flex-1 min-w-0">
-          <h3 className="text-[15px] font-semibold text-[#1a1a1a] leading-snug mb-4">
-            {policy.name}
-          </h3>
+          <div className="flex items-center gap-2.5 mb-4">
+            <h3 className="text-[15px] font-semibold text-[#1a1a1a] leading-snug">
+              {policy.name}
+            </h3>
+            {typeLabel && typeColor && (
+              <span
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap"
+                style={{ backgroundColor: typeColor.bg, color: typeColor.text }}
+              >
+                {typeLabel}
+              </span>
+            )}
+          </div>
 
           {/* Members */}
           <div>

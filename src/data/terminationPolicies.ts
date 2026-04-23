@@ -10,9 +10,18 @@ export interface MemberCondition {
   value: string;
 }
 
+export type PolicyType = 'severance' | 'vacation_pay' | 'notice_period_pay';
+
+export const POLICY_TYPE_LABELS: Record<PolicyType, string> = {
+  severance: 'Severance Pay',
+  vacation_pay: 'Vacation Pay',
+  notice_period_pay: 'Notice Period Pay',
+};
+
 export interface TerminationPolicy {
   id: string;
   name: string;
+  policyType?: PolicyType;
   members: MemberCondition[];
   exceptFor: MemberCondition[];
   components: PolicyComponent[];
