@@ -82,7 +82,6 @@ const CONDITION_FIELD_OPTIONS = [
   { id: 'country', label: 'Country' },
   { id: 'before_probationary_period', label: 'Before Probationary Period' },
   { id: 'contract_type', label: 'Contract Type' },
-  { id: 'remaining_days_on_contract', label: 'Remaining Days on Contract' },
   { id: 'province', label: 'Province' },
   { id: 'tenure', label: 'Tenure' },
 ];
@@ -171,6 +170,7 @@ const SALARY_BASIS_OPTIONS = [
 const METHOD_OPTIONS = [
   { id: 'fixed', label: 'Fixed' },
   { id: 'per_years_of_service', label: 'Per Years of Service' },
+  { id: 'remaining_days_on_contract', label: 'Remaining Days on Contract' },
 ];
 
 const VACATION_MINIMUM_OPTIONS = [
@@ -241,8 +241,7 @@ function FieldPickerPopover({
   const handleNumericSubmit = () => {
     if (numericValue.trim()) {
       const opLabel = TENURE_OPERATOR_OPTIONS.find((o) => o.id === numericOperator)?.label ?? '>=';
-      const unit = selectedField === 'tenure' ? 'years' : 'days';
-      onAdd(selectedField, selectedFieldLabel, numericOperator, `${opLabel} ${numericValue.trim()} ${unit}`);
+      onAdd(selectedField, selectedFieldLabel, numericOperator, `${opLabel} ${numericValue.trim()} years`);
     }
   };
 
@@ -254,7 +253,7 @@ function FieldPickerPopover({
 
   const provinces = PROVINCE_OPTIONS[countryCode] ?? [];
   const fixedValues = FIELD_VALUE_OPTIONS[selectedField];
-  const isNumericField = selectedField === 'tenure' || selectedField === 'remaining_days_on_contract';
+  const isNumericField = selectedField === 'tenure';
   const isProvince = selectedField === 'province';
 
   return (
@@ -728,21 +727,25 @@ function SeveranceSubSection({
               label="Method"
               value={sub.method ?? ''}
               options={METHOD_OPTIONS}
-              onChange={(v) => onUpdate({ method: v })}
+              onChange={(v) => onUpdate({ method: v, ...(v === 'remaining_days_on_contract' ? { valueDays: undefined, maxCapDays: undefined } : {}) })}
               placeholder="Select method..."
             />
-            <InputText
-              label="Value (calculated in days)"
-              value={sub.valueDays ?? ''}
-              onChange={(v) => onUpdate({ valueDays: v })}
-              placeholder="e.g. 15"
-            />
-            <InputText
-              label="Maximum cap on days offered"
-              value={sub.maxCapDays ?? ''}
-              onChange={(v) => onUpdate({ maxCapDays: v })}
-              placeholder="N/A"
-            />
+            {sub.method !== 'remaining_days_on_contract' && (
+              <>
+                <InputText
+                  label="Value (calculated in days)"
+                  value={sub.valueDays ?? ''}
+                  onChange={(v) => onUpdate({ valueDays: v })}
+                  placeholder="e.g. 15"
+                />
+                <InputText
+                  label="Maximum cap on days offered"
+                  value={sub.maxCapDays ?? ''}
+                  onChange={(v) => onUpdate({ maxCapDays: v })}
+                  placeholder="N/A"
+                />
+              </>
+            )}
             <InputText
               label="Maximum cap on monthly salary"
               value={sub.maxCapMonthlySalary ?? ''}
@@ -1064,7 +1067,8 @@ export default function CreateTerminationPolicyView() {
   }
 
   function hydrateSubComponent(sub: SeveranceSubComponent, method: string) {
-    if (method.includes('Per years of service')) sub.method = 'per_years_of_service';
+    if (method.includes('Remaining days on contract')) sub.method = 'remaining_days_on_contract';
+    else if (method.includes('Per years of service')) sub.method = 'per_years_of_service';
     else if (method.includes('Fixed')) sub.method = 'fixed';
     const daysMatch = method.match(/:\s*(\d+)\s*days/);
     if (daysMatch) sub.valueDays = daysMatch[1];
@@ -1122,10 +1126,15 @@ export default function CreateTerminationPolicyView() {
       components.push({ name: 'Vacation Pay', calculationMethod: `${min}${capSuffix}; Salary basis: ${salaryLabel(vacationPayConfig.salaryBasis) || 'Not set'}` });
     } else {
       const formatSub = (label: string, sub: SeveranceSubComponent) => {
-        const method = sub.method === 'per_years_of_service' ? 'Per years of service' : 'Fixed';
+        const isRemaining = sub.method === 'remaining_days_on_contract';
+        const method = isRemaining ? 'Remaining days on contract' :
+          sub.method === 'per_years_of_service' ? 'Per years of service' : 'Fixed';
+        const details = isRemaining
+          ? `${method}`
+          : `${method}: ${sub.valueDays ?? '?'} days${sub.maxCapDays ? `, max ${sub.maxCapDays} days` : ''}`;
         components.push({
           name: label,
-          calculationMethod: `${method}: ${sub.valueDays ?? '?'} days${sub.maxCapDays ? `, max ${sub.maxCapDays} days` : ''}`,
+          calculationMethod: `${details}${sub.maxCapMonthlySalary ? `; max monthly salary ${sub.maxCapMonthlySalary}` : ''}; Salary basis: ${salaryLabel(sub.salaryBasis) || 'Not set'}`,
         });
       };
       for (const sc of SEVERANCE_SUB_COMPONENTS) {
