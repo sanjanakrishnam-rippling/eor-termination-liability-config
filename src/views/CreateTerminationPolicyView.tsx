@@ -82,6 +82,7 @@ const CONDITION_FIELD_OPTIONS = [
   { id: 'country', label: 'Country' },
   { id: 'before_probationary_period', label: 'Before Probationary Period' },
   { id: 'contract_type', label: 'Contract Type' },
+  { id: 'remaining_days_on_contract', label: 'Remaining Days on Contract' },
   { id: 'province', label: 'Province' },
   { id: 'tenure', label: 'Tenure' },
 ];
@@ -213,8 +214,8 @@ function FieldPickerPopover({
   const [step, setStep] = useState<'field' | 'value'>('field');
   const [selectedField, setSelectedField] = useState('');
   const [selectedFieldLabel, setSelectedFieldLabel] = useState('');
-  const [tenureOperator, setTenureOperator] = useState('greater_than_or_equal');
-  const [tenureValue, setTenureValue] = useState('');
+  const [numericOperator, setNumericOperator] = useState('greater_than_or_equal');
+  const [numericValue, setNumericValue] = useState('');
   const popoverRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -237,22 +238,23 @@ function FieldPickerPopover({
     onAdd(selectedField, selectedFieldLabel, 'equals', value);
   };
 
-  const handleTenureSubmit = () => {
-    if (tenureValue.trim()) {
-      const opLabel = TENURE_OPERATOR_OPTIONS.find((o) => o.id === tenureOperator)?.label ?? '>=';
-      onAdd(selectedField, selectedFieldLabel, tenureOperator, `${opLabel} ${tenureValue.trim()} years`);
+  const handleNumericSubmit = () => {
+    if (numericValue.trim()) {
+      const opLabel = TENURE_OPERATOR_OPTIONS.find((o) => o.id === numericOperator)?.label ?? '>=';
+      const unit = selectedField === 'tenure' ? 'years' : 'days';
+      onAdd(selectedField, selectedFieldLabel, numericOperator, `${opLabel} ${numericValue.trim()} ${unit}`);
     }
   };
 
   const goBack = () => {
     setStep('field');
     setSelectedField('');
-    setTenureValue('');
+    setNumericValue('');
   };
 
   const provinces = PROVINCE_OPTIONS[countryCode] ?? [];
   const fixedValues = FIELD_VALUE_OPTIONS[selectedField];
-  const isTenure = selectedField === 'tenure';
+  const isNumericField = selectedField === 'tenure' || selectedField === 'remaining_days_on_contract';
   const isProvince = selectedField === 'province';
 
   return (
@@ -286,11 +288,11 @@ function FieldPickerPopover({
             <p className="text-[11px] font-semibold text-[#9d9d9d] uppercase tracking-wide">{selectedFieldLabel}</p>
           </div>
 
-          {isTenure ? (
+          {isNumericField ? (
             <div className="p-3 flex flex-col gap-2">
               <select
-                value={tenureOperator}
-                onChange={(e) => setTenureOperator(e.target.value)}
+                value={numericOperator}
+                onChange={(e) => setNumericOperator(e.target.value)}
                 className="h-9 px-2 text-[13px] rounded-lg border border-[#d5d5d5] outline-none focus:border-[#7A005D]"
               >
                 {TENURE_OPERATOR_OPTIONS.map((o) => (
@@ -301,15 +303,15 @@ function FieldPickerPopover({
                 <input
                   autoFocus
                   type="number"
-                  value={tenureValue}
-                  onChange={(e) => setTenureValue(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleTenureSubmit(); }}
-                  placeholder="Years"
+                  value={numericValue}
+                  onChange={(e) => setNumericValue(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleNumericSubmit(); }}
+                  placeholder={selectedField === 'tenure' ? 'Years' : 'Days'}
                   className="flex-1 h-9 px-3 text-[13px] rounded-lg border border-[#d5d5d5] outline-none focus:border-[#7A005D] focus:ring-1 focus:ring-[#7A005D]/20"
                 />
                 <button
-                  onClick={handleTenureSubmit}
-                  disabled={!tenureValue.trim()}
+                  onClick={handleNumericSubmit}
+                  disabled={!numericValue.trim()}
                   className="h-9 px-3 rounded-lg bg-[#7A005D] text-white text-[12px] font-medium disabled:opacity-40 hover:bg-[#65004d] transition-colors"
                 >
                   Add
