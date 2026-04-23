@@ -2,7 +2,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 const NAV_ITEMS = [
   { id: 'countries', label: 'Countries', path: '/countries' },
-  { id: 'underwriting', label: 'Underwriting', path: '/apply' },
 ];
 
 export default function TopNav() {

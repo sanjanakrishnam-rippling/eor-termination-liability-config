@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { COUNTRIES } from '../data/countries';
-import { TERMINATION_POLICIES_BY_COUNTRY } from '../data/terminationPolicies';
+import { TerminationPolicy, MemberCondition } from '../data/terminationPolicies';
+import { usePolicyStore } from '../store/policyStore';
 import Button from '../components/Button';
 
 const TABS = [
@@ -40,10 +41,76 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
+function ConditionPill({ condition }: { condition: MemberCondition }) {
+  return (
+    <span className="inline-flex items-center gap-0 px-2.5 py-1 rounded-md bg-[#f5f5f5] border border-[#e5e7eb] text-[12px] leading-tight">
+      <span className="text-[#6b7280]">{condition.entity}</span>
+      <span className="text-[#6b7280] mx-0.5">{' -> '}</span>
+      <span className="text-[#1a1a1a] font-medium">{condition.field}</span>
+      <span className="text-[#9d9d9d] mx-1">{condition.operator}</span>
+      <span className="text-[#1a1a1a] font-medium">{condition.value}</span>
+    </span>
+  );
+}
+
+function PolicyCard({ policy, onDelete }: { policy: TerminationPolicy; onDelete: (id: string) => void }) {
+  return (
+    <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
+      <div className="flex items-start justify-between gap-6">
+        {/* Left side */}
+        <div className="flex-1 min-w-0">
+          <h3 className="text-[15px] font-semibold text-[#1a1a1a] leading-snug mb-4">
+            {policy.name}
+          </h3>
+
+          {/* Members */}
+          <div>
+            <p className="text-[12px] font-semibold text-[#1a1a1a] mb-2">Members</p>
+            <div className="flex flex-wrap gap-1.5 items-center">
+              {policy.members.map((cond, i) => (
+                <span key={i} className="contents">
+                  <ConditionPill condition={cond} />
+                  {i < policy.members.length - 1 && (
+                    <span className="text-[11px] font-semibold text-[#9d9d9d] px-0.5">and</span>
+                  )}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Action icons */}
+        <div className="flex items-center gap-1 shrink-0 pt-0.5">
+          <button
+            title="Edit policy"
+            className="p-2 rounded-lg hover:bg-[#f3f4f6] transition-colors text-[#6b7280] hover:text-[#1a1a1a]"
+          >
+            <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+          <button
+            title="Delete policy"
+            onClick={() => onDelete(policy.id)}
+            className="p-2 rounded-lg hover:bg-[#fef2f2] transition-colors text-[#6b7280] hover:text-[#bf0f0f]"
+          >
+            <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CountryDetailView() {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState(0);
+  const location = useLocation();
+  const initialTab = (location.state as { tab?: number } | null)?.tab ?? 0;
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const store = usePolicyStore();
 
   const country = COUNTRIES.find((c) => c.code === code);
 
@@ -61,8 +128,13 @@ export default function CountryDetailView() {
     );
   }
 
-  const policies = code ? TERMINATION_POLICIES_BY_COUNTRY[code] : undefined;
-  const totalComponents = policies?.reduce((sum, p) => sum + p.components.length, 0) ?? 0;
+  const policies = code ? store.getPolicies(code) : [];
+
+  const handleDeletePolicy = (policyId: string) => {
+    if (code && window.confirm('Are you sure you want to delete this policy? This action cannot be undone.')) {
+      store.deletePolicy(code, policyId);
+    }
+  };
 
   return (
     <div className="max-w-[1200px] mx-auto px-8 py-6">
@@ -218,15 +290,12 @@ export default function CountryDetailView() {
       {/* Termination Liability Policies Tab */}
       {activeTab === TERMINATION_TAB_INDEX && (
         <div>
-          {/* Summary bar */}
           <div className="flex items-center justify-between mb-6">
-            <div>
-              <p className="text-[14px] text-[#6b7280]">
-                {policies
-                  ? `${policies.length} ${policies.length === 1 ? 'policy' : 'policies'} configured with ${totalComponents} total components`
-                  : 'No termination liability policies configured for this country yet.'}
-              </p>
-            </div>
+            <p className="text-[14px] text-[#6b7280]">
+              {policies.length > 0
+                ? `${policies.length} ${policies.length === 1 ? 'policy' : 'policies'} configured`
+                : 'No termination liability policies configured for this country yet.'}
+            </p>
             <Button
               appearance="primary"
               size="md"
@@ -242,66 +311,9 @@ export default function CountryDetailView() {
           </div>
 
           {policies && policies.length > 0 ? (
-            <div className="flex flex-col gap-6">
-              {policies.map((policy, pIdx) => (
-                <div key={pIdx} className="bg-white border border-[#e5e7eb] rounded-lg overflow-hidden">
-                  {/* Policy Header */}
-                  <div className="px-6 py-4 border-b border-[#e5e7eb] flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-[15px] font-bold text-[#1a1a1a]">
-                            {policy.contractType} Contract
-                          </h3>
-                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium ${
-                            policy.status === 'Active'
-                              ? 'bg-[#e0f3f1] text-[#0c4739]'
-                              : 'bg-[#fff8e0] text-[#774f10]'
-                          }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${
-                              policy.status === 'Active' ? 'bg-[#079f8f]' : 'bg-[#ffc707]'
-                            }`} />
-                            {policy.status}
-                          </span>
-                        </div>
-                        <p className="text-[12px] text-[#9d9d9d] mt-0.5">
-                          Province: {policy.province} &middot; {policy.components.length} components &middot; Updated {policy.lastUpdated}
-                        </p>
-                      </div>
-                    </div>
-                    <button className="px-3 py-1.5 text-[13px] font-medium text-[#1a1a1a] border border-[#d5d5d5] rounded-lg hover:bg-[#f9fafb] transition-colors">
-                      Edit
-                    </button>
-                  </div>
-
-                  {/* Components Table */}
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-[#f9fafb] border-b border-[#e5e7eb]">
-                        <th className="text-left px-6 py-2.5 text-[11px] font-semibold text-[#9d9d9d] uppercase tracking-wider w-[40px]">#</th>
-                        <th className="text-left px-6 py-2.5 text-[11px] font-semibold text-[#9d9d9d] uppercase tracking-wider">Component</th>
-                        <th className="text-left px-6 py-2.5 text-[11px] font-semibold text-[#9d9d9d] uppercase tracking-wider">Calculation Method</th>
-                        <th className="text-left px-6 py-2.5 text-[11px] font-semibold text-[#9d9d9d] uppercase tracking-wider">Conditions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {policy.components.map((comp, cIdx) => (
-                        <tr key={cIdx} className="border-b border-[#f1f1f1] last:border-b-0 hover:bg-[#fafafa] transition-colors">
-                          <td className="px-6 py-3 text-[12px] text-[#9d9d9d]">{cIdx + 1}</td>
-                          <td className="px-6 py-3">
-                            <p className="text-[13px] font-medium text-[#1a1a1a]">{comp.name}</p>
-                          </td>
-                          <td className="px-6 py-3">
-                            <p className="text-[13px] text-[#1a1a1a]">{comp.calculationMethod}</p>
-                          </td>
-                          <td className="px-6 py-3">
-                            <p className="text-[13px] text-[#6b7280]">{comp.conditions}</p>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+            <div className="flex flex-col gap-4">
+              {policies.map((policy) => (
+                <PolicyCard key={policy.id} policy={policy} onDelete={handleDeletePolicy} />
               ))}
             </div>
           ) : (
@@ -320,7 +332,7 @@ export default function CountryDetailView() {
                 size="md"
                 onClick={() => navigate(`/countries/${code}/termination/new`)}
               >
-                Create First Policy
+                Add First Policy
               </Button>
             </div>
           )}

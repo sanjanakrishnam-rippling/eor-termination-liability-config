@@ -9,6 +9,7 @@ import CountryDetailView from './views/CountryDetailView';
 import CreateTerminationPolicyView from './views/CreateTerminationPolicyView';
 import TopNav from './components/TopNav';
 import DevToolbar from './components/DevToolbar';
+import { PolicyProvider } from './store/policyStore';
 
 function AppHeader() {
   return (
@@ -53,7 +54,9 @@ function AppContent() {
 export default function App() {
   return (
     <Router>
-      <AppContent />
+      <PolicyProvider>
+        <AppContent />
+      </PolicyProvider>
     </Router>
   );
 }
