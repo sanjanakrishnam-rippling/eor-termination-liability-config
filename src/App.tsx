@@ -8,7 +8,6 @@ import CountryListView from './views/CountryListView';
 import CountryDetailView from './views/CountryDetailView';
 import CreateTerminationPolicyView from './views/CreateTerminationPolicyView';
 import TopNav from './components/TopNav';
-import DevToolbar from './components/DevToolbar';
 import { PolicyProvider } from './store/policyStore';
 
 function AppHeader() {
@@ -26,7 +25,6 @@ function AppHeader() {
 function AppContent() {
   return (
     <div className="min-h-screen flex flex-col">
-      <DevToolbar />
       <AppHeader />
       <TopNav />
       <main className="flex-1 flex flex-col bg-[#fafafa]">
