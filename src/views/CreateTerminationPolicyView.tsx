@@ -37,6 +37,7 @@ interface VacationPayConfig {
   salaryBasis: string[];
   vacationMinimum?: string;
   vacationFixedDays?: string;
+  maxCapDays?: string;
 }
 
 interface NoticePeriodConfig {
@@ -653,13 +654,22 @@ function VacationPayCard({
         />
       </div>
       {config.vacationMinimum === 'less_than_all' && (
-        <InputText
-          label="Days"
-          value={config.vacationFixedDays ?? ''}
-          onChange={(v) => onChange({ ...config, vacationFixedDays: v })}
-          placeholder="e.g. 5"
-        />
+        <div className="mb-4">
+          <InputText
+            label="Days"
+            value={config.vacationFixedDays ?? ''}
+            onChange={(v) => onChange({ ...config, vacationFixedDays: v })}
+            placeholder="e.g. 5"
+          />
+        </div>
       )}
+
+      <InputText
+        label="Maximum cap on days"
+        value={config.maxCapDays ?? ''}
+        onChange={(v) => onChange({ ...config, maxCapDays: v })}
+        placeholder="e.g. 30"
+      />
     </section>
   );
 }
@@ -739,7 +749,8 @@ export default function CreateTerminationPolicyView() {
     } else if (policyType === 'vacation_pay') {
       const min = vacationPayConfig.vacationMinimum === 'all_accrued' ? 'All Accrued' :
         vacationPayConfig.vacationMinimum === 'less_than_all' ? `Less than all accrued (${vacationPayConfig.vacationFixedDays ?? '?'} days)` : 'Not set';
-      components.push({ name: 'Vacation Pay', calculationMethod: `${min}; Salary basis: ${salaryLabel(vacationPayConfig.salaryBasis) || 'Not set'}` });
+      const capSuffix = vacationPayConfig.maxCapDays ? `; Max cap: ${vacationPayConfig.maxCapDays} days` : '';
+      components.push({ name: 'Vacation Pay', calculationMethod: `${min}${capSuffix}; Salary basis: ${salaryLabel(vacationPayConfig.salaryBasis) || 'Not set'}` });
     } else {
       for (const sc of SEVERANCE_SUB_COMPONENTS) {
         const sub = severanceConfig.subComponents[sc.id];
