@@ -721,8 +721,14 @@ export default function CreateTerminationPolicyView() {
       value: pill.value,
     });
 
-    const members: MemberCondition[] = includes.map(pillToCondition);
-    const exceptFor: MemberCondition[] = excepts.map(pillToCondition);
+    const isFixedScope = policyType === 'notice_period_pay' || policyType === 'vacation_pay';
+    const members: MemberCondition[] = isFixedScope
+      ? [
+          { entity: 'Employee', field: 'Is an EOR Employee?', operator: 'equals', value: 'True' },
+          { entity: 'Employee', field: 'Country?', operator: 'equals', value: countryName },
+        ]
+      : includes.map(pillToCondition);
+    const exceptFor: MemberCondition[] = isFixedScope ? [] : excepts.map(pillToCondition);
 
     const components: PolicyComponent[] = [];
     const salaryLabel = (ids: string[]) =>
@@ -900,8 +906,29 @@ export default function CreateTerminationPolicyView() {
           />
         </section>
 
-        {/* Who does this apply to? (hidden for Notice Period Pay) */}
-        {policyType !== 'notice_period_pay' && (
+        {/* Who does this apply to? — read-only for notice_period_pay & vacation_pay, editable for severance */}
+        {(policyType === 'notice_period_pay' || policyType === 'vacation_pay') ? (
+          <section className="bg-white border border-[#e5e7eb] rounded-lg p-6">
+            <SectionLabel>Who does this apply to?</SectionLabel>
+            <SectionDescription>This policy applies to all EOR employees in {countryName}.</SectionDescription>
+
+            <div className="border border-[#e5e7eb] rounded-lg bg-[#fafafa]">
+              <div className="p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#f5f5f5] border border-[#e5e7eb] text-[13px]">
+                    <PillIcon />
+                    <span className="text-[#1a1a1a]">Is an EOR Employee? → True</span>
+                  </span>
+                  <AndSeparator />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#f5f5f5] border border-[#e5e7eb] text-[13px]">
+                    <PillIcon />
+                    <span className="text-[#1a1a1a]">Country → {countryName}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : (
           <section className="bg-white border border-[#e5e7eb] rounded-lg p-6">
             <SectionLabel>Who does this apply to?</SectionLabel>
             <SectionDescription>Define the conditions that determine which employees this policy covers.</SectionDescription>
