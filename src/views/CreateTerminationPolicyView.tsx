@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { COUNTRIES } from '../data/countries';
-import { MemberCondition, PolicyComponent, PolicyType } from '../data/terminationPolicies';
+import { MemberCondition, PolicyComponent, PolicyType, TerminationPolicy } from '../data/terminationPolicies';
 import { usePolicyStore } from '../store/policyStore';
 import Button from '../components/Button';
 import Select from '../components/Select';
@@ -959,27 +959,134 @@ function NoticePeriodCard({
 
 /* ─── Main View ─── */
 export default function CreateTerminationPolicyView() {
-  const { code } = useParams<{ code: string }>();
+  const { code, policyId } = useParams<{ code: string; policyId?: string }>();
   const navigate = useNavigate();
+  const store = usePolicyStore();
 
   const country = COUNTRIES.find((c) => c.code === code);
   const countryName = country?.name ?? code ?? 'Unknown';
 
-  const [policyType, setPolicyType] = useState<PolicyType | null>(null);
-  const [policyName, setPolicyName] = useState('');
+  const isEditMode = Boolean(policyId);
+  const existingPolicy: TerminationPolicy | undefined = useMemo(() => {
+    if (!isEditMode || !code) return undefined;
+    return store.getPolicies(code).find((p) => p.id === policyId);
+  }, [isEditMode, code, policyId]);
+
+  const [policyType, setPolicyType] = useState<PolicyType | null>(() => existingPolicy?.policyType ?? null);
+  const [policyName, setPolicyName] = useState(() => existingPolicy?.name ?? '');
   const [conditionGroups, setConditionGroups] = useState<ConditionGroup[]>([]);
   const [showConditionModal, setShowConditionModal] = useState(false);
+  const [initialized, setInitialized] = useState(!isEditMode);
 
   const [severanceConfig, setSeveranceConfig] = useState<SeveranceConfig>(createEmptySeverance());
   const [vacationPayConfig, setVacationPayConfig] = useState<VacationPayConfig>({ type: 'vacation_pay', salaryBasis: [] });
   const [noticePeriodConfig, setNoticePeriodConfig] = useState<NoticePeriodConfig>({ type: 'notice_period_pay', salaryBasis: [] });
 
+  useEffect(() => {
+    if (!isEditMode || !existingPolicy || initialized) return;
+    hydrateFromPolicy(existingPolicy);
+    setInitialized(true);
+  }, [existingPolicy, isEditMode, initialized]);
+
+  function hydrateFromPolicy(p: TerminationPolicy) {
+    setPolicyName(p.name);
+    setPolicyType(p.policyType ?? null);
+
+    const membersToPills = (members: MemberCondition[]): ConditionGroup[] => {
+      const pills: ConditionPill[] = members.map((m, i) => {
+        const fieldLabel = m.field.replace(/\?$/, '');
+        const fieldOpt = CONDITION_FIELD_OPTIONS.find(
+          (f) => f.label.toLowerCase() === fieldLabel.toLowerCase().replace('is an eor employee', 'is eor employee')
+        );
+        return {
+          id: `hydrated-${i}`,
+          field: fieldOpt?.id ?? m.field,
+          fieldLabel,
+          operator: m.operator,
+          value: m.value,
+        };
+      });
+      return pills.length > 0 ? [pills] : [];
+    };
+
+    if (p.policyType === 'severance') {
+      setConditionGroups(membersToPills(p.members));
+      const sev = createEmptySeverance();
+      for (const comp of p.components) {
+        const predefined = SEVERANCE_SUB_COMPONENTS.find((sc) => sc.label === comp.name);
+        if (predefined) {
+          const sub = sev.subComponents[predefined.id];
+          sub.enabled = true;
+          hydrateSubComponent(sub, comp.calculationMethod);
+        } else if (comp.name !== 'Severance') {
+          const custom: CustomSeveranceComponent = {
+            id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            label: comp.name,
+            config: { enabled: true, salaryBasis: [] },
+          };
+          hydrateSubComponent(custom.config, comp.calculationMethod);
+          sev.customComponents.push(custom);
+        }
+      }
+      setSeveranceConfig(sev);
+    } else if (p.policyType === 'vacation_pay') {
+      const comp = p.components.find((c) => c.name === 'Vacation Pay');
+      if (comp) {
+        const vac: VacationPayConfig = { type: 'vacation_pay', salaryBasis: [] };
+        const method = comp.calculationMethod;
+        if (method.includes('All Accrued')) vac.vacationMinimum = 'all_accrued';
+        else if (method.includes('Less than all accrued')) {
+          vac.vacationMinimum = 'less_than_all';
+          const daysMatch = method.match(/\((\d+)\s*days\)/);
+          if (daysMatch) vac.vacationFixedDays = daysMatch[1];
+        }
+        const capMatch = method.match(/Max cap:\s*(\d+)\s*days/);
+        if (capMatch) vac.maxCapDays = capMatch[1];
+        const basisMatch = method.match(/Salary basis:\s*(.+)$/);
+        if (basisMatch && basisMatch[1] !== 'Not set') {
+          vac.salaryBasis = parseSalaryBasisLabels(basisMatch[1]);
+        }
+        setVacationPayConfig(vac);
+      }
+    } else if (p.policyType === 'notice_period_pay') {
+      const comp = p.components.find((c) => c.name === 'Notice Period Pay');
+      if (comp) {
+        const np: NoticePeriodConfig = { type: 'notice_period_pay', salaryBasis: [] };
+        const basisMatch = comp.calculationMethod.match(/Salary basis:\s*(.+)$/);
+        if (basisMatch && basisMatch[1] !== 'Not set') {
+          np.salaryBasis = parseSalaryBasisLabels(basisMatch[1]);
+        }
+        setNoticePeriodConfig(np);
+      }
+    }
+  }
+
+  function hydrateSubComponent(sub: SeveranceSubComponent, method: string) {
+    if (method.includes('Per years of service')) sub.method = 'per_years_of_service';
+    else if (method.includes('Fixed')) sub.method = 'fixed';
+    const daysMatch = method.match(/:\s*(\d+)\s*days/);
+    if (daysMatch) sub.valueDays = daysMatch[1];
+    const maxDaysMatch = method.match(/max\s+(\d+)\s+days/);
+    if (maxDaysMatch) sub.maxCapDays = maxDaysMatch[1];
+    const maxMonthlyMatch = method.match(/max monthly salary\s+(.+?)(?:;|$)/);
+    if (maxMonthlyMatch) sub.maxCapMonthlySalary = maxMonthlyMatch[1].trim();
+    const basisMatch = method.match(/Salary basis:\s*(.+)$/);
+    if (basisMatch && basisMatch[1] !== 'Not set') {
+      sub.salaryBasis = parseSalaryBasisLabels(basisMatch[1]);
+    }
+  }
+
+  function parseSalaryBasisLabels(labelsStr: string): string[] {
+    const labels = labelsStr.split(',').map((s) => s.trim());
+    return labels
+      .map((label) => SALARY_BASIS_OPTIONS.find((o) => o.label === label)?.id ?? '')
+      .filter(Boolean);
+  }
+
   const handleSaveConditions = (newGroups: ConditionGroup[]) => {
     setConditionGroups(newGroups);
     setShowConditionModal(false);
   };
-
-  const store = usePolicyStore();
 
   const handleSave = () => {
     if (!code || !policyType || !policyName.trim()) return;
@@ -1031,17 +1138,34 @@ export default function CreateTerminationPolicyView() {
       }
     }
 
-    store.addPolicy(code, {
-      id: `${code.toLowerCase()}-custom-${Date.now()}`,
+    const policy: TerminationPolicy = {
+      id: isEditMode && policyId ? policyId : `${code.toLowerCase()}-custom-${Date.now()}`,
       name: policyName.trim(),
       policyType,
       members,
       exceptFor,
       components,
-    });
+    };
+
+    if (isEditMode) {
+      store.updatePolicy(code, policy);
+    } else {
+      store.addPolicy(code, policy);
+    }
 
     navigate(`/countries/${code}`, { state: { tab: 6 } });
   };
+
+  if (isEditMode && !existingPolicy) {
+    return (
+      <div className="max-w-[600px] mx-auto px-8 py-8">
+        <p className="text-[14px] text-[#6b7280]">Policy not found.</p>
+        <Button appearance="secondary" size="md" onClick={() => navigate(`/countries/${code}`, { state: { tab: 6 } })}>
+          Back
+        </Button>
+      </div>
+    );
+  }
 
   /* ─── Breadcrumb ─── */
   const breadcrumb = (
@@ -1058,7 +1182,7 @@ export default function CreateTerminationPolicyView() {
       <svg className="w-3.5 h-3.5 text-[#c7c7c7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
       </svg>
-      <span className="text-[#1a1a1a] font-medium">Add Policy</span>
+      <span className="text-[#1a1a1a] font-medium">{isEditMode ? 'Edit Policy' : 'Add Policy'}</span>
     </div>
   );
 
@@ -1067,9 +1191,9 @@ export default function CreateTerminationPolicyView() {
     return (
       <div className="max-w-[600px] mx-auto px-8 py-8">
         {breadcrumb}
-        <h1 className="text-[22px] font-bold text-[#1a1a1a] mb-2">Add Termination Liability Policy</h1>
+        <h1 className="text-[22px] font-bold text-[#1a1a1a] mb-2">{isEditMode ? 'Edit' : 'Add'} Termination Liability Policy</h1>
         <p className="text-[14px] text-[#6b7280] mb-8">
-          What type of policy do you want to create for {countryName}?
+          What type of policy do you want to {isEditMode ? 'switch to' : 'create'} for {countryName}?
         </p>
 
         <div className="flex flex-col gap-4">
@@ -1149,16 +1273,18 @@ export default function CreateTerminationPolicyView() {
       {breadcrumb}
 
       <div className="flex items-center gap-3 mb-2">
-        <button
-          onClick={() => setPolicyType(null)}
-          className="p-1.5 rounded-lg hover:bg-[#f3f4f6] text-[#6b7280] hover:text-[#1a1a1a] transition-colors"
-          title="Back to type selection"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <h1 className="text-[22px] font-bold text-[#1a1a1a]">Add {typeLabel} Policy</h1>
+        {!isEditMode && (
+          <button
+            onClick={() => setPolicyType(null)}
+            className="p-1.5 rounded-lg hover:bg-[#f3f4f6] text-[#6b7280] hover:text-[#1a1a1a] transition-colors"
+            title="Back to type selection"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
+        <h1 className="text-[22px] font-bold text-[#1a1a1a]">{isEditMode ? 'Edit' : 'Add'} {typeLabel} Policy</h1>
         <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#f2f0f7] text-[#4a284b] font-medium">{typeLabel}</span>
       </div>
       <p className="text-[14px] text-[#6b7280] mb-8 ml-10">
@@ -1259,7 +1385,7 @@ export default function CreateTerminationPolicyView() {
             Cancel
           </Button>
           <Button appearance="primary" size="lg" onClick={handleSave} disabled={!policyName.trim()}>
-            Save Policy
+            {isEditMode ? 'Update Policy' : 'Save Policy'}
           </Button>
         </div>
       </div>

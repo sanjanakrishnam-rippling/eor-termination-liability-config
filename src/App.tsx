@@ -35,6 +35,7 @@ function AppContent() {
           <Route path="/countries" element={<CountryListView />} />
           <Route path="/countries/:code" element={<CountryDetailView />} />
           <Route path="/countries/:code/termination/new" element={<CreateTerminationPolicyView />} />
+          <Route path="/countries/:code/termination/edit/:policyId" element={<CreateTerminationPolicyView />} />
 
           {/* Underwriting */}
           <Route path="/apply" element={<IntakeFormView />} />

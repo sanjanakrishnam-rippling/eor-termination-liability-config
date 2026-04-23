@@ -7,6 +7,7 @@ import {
 interface PolicyStore {
   getPolicies: (countryCode: string) => TerminationPolicy[];
   addPolicy: (countryCode: string, policy: TerminationPolicy) => void;
+  updatePolicy: (countryCode: string, policy: TerminationPolicy) => void;
   deletePolicy: (countryCode: string, policyId: string) => void;
 }
 
@@ -28,6 +29,13 @@ export function PolicyProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const updatePolicy = (countryCode: string, policy: TerminationPolicy) => {
+    setPoliciesByCountry((prev) => ({
+      ...prev,
+      [countryCode]: (prev[countryCode] ?? []).map((p) => (p.id === policy.id ? policy : p)),
+    }));
+  };
+
   const deletePolicy = (countryCode: string, policyId: string) => {
     setPoliciesByCountry((prev) => ({
       ...prev,
@@ -36,7 +44,7 @@ export function PolicyProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <PolicyContext.Provider value={{ getPolicies, addPolicy, deletePolicy }}>
+    <PolicyContext.Provider value={{ getPolicies, addPolicy, updatePolicy, deletePolicy }}>
       {children}
     </PolicyContext.Provider>
   );

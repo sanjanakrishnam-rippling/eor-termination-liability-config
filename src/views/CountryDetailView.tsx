@@ -59,7 +59,7 @@ const POLICY_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
   notice_period_pay: { bg: '#ede9fe', text: '#5b21b6' },
 };
 
-function PolicyCard({ policy, onDelete }: { policy: TerminationPolicy; onDelete: (id: string) => void }) {
+function PolicyCard({ policy, onDelete, onEdit }: { policy: TerminationPolicy; onDelete: (id: string) => void; onEdit: (id: string) => void }) {
   const typeLabel = policy.policyType ? POLICY_TYPE_LABELS[policy.policyType] : null;
   const typeColor = policy.policyType ? POLICY_TYPE_COLORS[policy.policyType] : null;
 
@@ -102,6 +102,7 @@ function PolicyCard({ policy, onDelete }: { policy: TerminationPolicy; onDelete:
         <div className="flex items-center gap-1 shrink-0 pt-0.5">
           <button
             title="Edit policy"
+            onClick={() => onEdit(policy.id)}
             className="p-2 rounded-lg hover:bg-[#f3f4f6] transition-colors text-[#6b7280] hover:text-[#1a1a1a]"
           >
             <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -332,7 +333,7 @@ export default function CountryDetailView() {
           {policies && policies.length > 0 ? (
             <div className="flex flex-col gap-4">
               {policies.map((policy) => (
-                <PolicyCard key={policy.id} policy={policy} onDelete={handleDeletePolicy} />
+                <PolicyCard key={policy.id} policy={policy} onDelete={handleDeletePolicy} onEdit={(id) => navigate(`/countries/${code}/termination/edit/${id}`)} />
               ))}
             </div>
           ) : (
