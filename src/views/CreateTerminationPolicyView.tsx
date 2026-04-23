@@ -765,7 +765,6 @@ function SeveranceSubSection({
 
           {isMta && (
             <div className="border-t border-[#e5e7eb] pt-3 mt-1">
-              <p className="text-[12px] font-semibold text-[#6b7280] uppercase tracking-wide mb-2">MTA-specific</p>
               <div className="grid grid-cols-2 gap-3">
                 <InputText
                   label="Days to secure MTA (excl. notice period)"
