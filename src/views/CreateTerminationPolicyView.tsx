@@ -748,18 +748,18 @@ function SeveranceSubSection({
                   placeholder="e.g. 15"
                 />
                 <InputText
-                  label="Maximum cap on days offered"
+                  label="Maximum cap on days offered if any"
                   value={sub.maxCapDays ?? ''}
                   onChange={(v) => onUpdate({ maxCapDays: v })}
-                  placeholder="N/A"
+                  placeholder="Leave as empty if none"
                 />
               </>
             )}
             <InputText
-              label="Maximum cap on monthly salary"
+              label="Maximum cap on monthly salary if any"
               value={sub.maxCapMonthlySalary ?? ''}
               onChange={(v) => onUpdate({ maxCapMonthlySalary: v })}
-              placeholder="N/A"
+              placeholder="Leave as empty if none"
             />
           </div>
 
@@ -767,13 +767,13 @@ function SeveranceSubSection({
             <div className="border-t border-[#e5e7eb] pt-3 mt-1">
               <div className="grid grid-cols-2 gap-3">
                 <InputText
-                  label="Days to secure MTA (excl. notice period)"
+                  label="Days to secure MTA on top of the notice period"
                   value={sub.mtaDaysToSecure ?? ''}
                   onChange={(v) => onUpdate({ mtaDaysToSecure: v })}
                   placeholder="e.g. 30"
                 />
                 <Select
-                  label="Employee continues to receive pay?"
+                  label="Does employee continue to receive pay during this negotiation period?"
                   value={sub.mtaContinuePay ?? ''}
                   options={MTA_CONTINUE_PAY_OPTIONS}
                   onChange={(v) => onUpdate({ mtaContinuePay: v })}
@@ -841,7 +841,7 @@ function SeveranceCard({
   return (
     <section className="bg-white border border-[#e5e7eb] rounded-lg p-6">
       <SectionLabel>Severance Components</SectionLabel>
-      <SectionDescription>Select the severance sub-components and configure each one, including their salary basis.</SectionDescription>
+      <SectionDescription>Select the severance sub-components and configure each one, including their salary basis that is covered under this policy.</SectionDescription>
 
       <p className="text-[13px] font-medium text-[#374151] mb-3">Sub-components</p>
       <div className="flex flex-col gap-3">
@@ -931,8 +931,8 @@ function VacationPayCard({
 }) {
   return (
     <section className="bg-white border border-[#e5e7eb] rounded-lg p-6">
-      <SectionLabel>Vacation Pay</SectionLabel>
-      <SectionDescription>Configure the vacation payout entitlement and salary basis.</SectionDescription>
+      <SectionLabel>Vacation pay</SectionLabel>
+      <SectionDescription>Select the compensation components included in the salary basis used to calculate vacation pay, and configure the payout entitlement.</SectionDescription>
 
       <div className="mb-4">
         <SalaryBasisMultiSelect
@@ -962,10 +962,10 @@ function VacationPayCard({
       )}
 
       <InputText
-        label="Maximum cap on days offered"
+        label="Maximum cap on days offered if any"
         value={config.maxCapDays ?? ''}
         onChange={(v) => onChange({ ...config, maxCapDays: v })}
-        placeholder="N/A"
+        placeholder="Leave as empty if none"
       />
     </section>
   );
@@ -981,8 +981,8 @@ function NoticePeriodCard({
 }) {
   return (
     <section className="bg-white border border-[#e5e7eb] rounded-lg p-6">
-      <SectionLabel>Notice Period Pay</SectionLabel>
-      <SectionDescription>Select the salary basis used to calculate notice period pay.</SectionDescription>
+      <SectionLabel>Notice period pay</SectionLabel>
+      <SectionDescription>Select the compensation components included in the salary basis used to calculate notice period pay.</SectionDescription>
 
       <SalaryBasisMultiSelect
         selected={config.salaryBasis}
@@ -1065,7 +1065,7 @@ export default function CreateTerminationPolicyView() {
       }
       setSeveranceConfig(sev);
     } else if (p.policyType === 'vacation_pay') {
-      const comp = p.components.find((c) => c.name === 'Vacation Pay');
+      const comp = p.components.find((c) => c.name === 'Vacation pay');
       if (comp) {
         const vac: VacationPayConfig = { type: 'vacation_pay', salaryBasis: [] };
         const method = comp.calculationMethod;
@@ -1084,7 +1084,7 @@ export default function CreateTerminationPolicyView() {
         setVacationPayConfig(vac);
       }
     } else if (p.policyType === 'notice_period_pay') {
-      const comp = p.components.find((c) => c.name === 'Notice Period Pay');
+      const comp = p.components.find((c) => c.name === 'Notice period pay');
       if (comp) {
         const np: NoticePeriodConfig = { type: 'notice_period_pay', salaryBasis: [] };
         const basisMatch = comp.calculationMethod.match(/Salary basis:\s*(.+)$/);
@@ -1152,12 +1152,12 @@ export default function CreateTerminationPolicyView() {
       ids.map((id) => SALARY_BASIS_OPTIONS.find((o) => o.id === id)?.label ?? id).join(', ');
 
     if (policyType === 'notice_period_pay') {
-      components.push({ name: 'Notice Period Pay', calculationMethod: `Salary basis: ${salaryLabel(noticePeriodConfig.salaryBasis) || 'Not set'}` });
+      components.push({ name: 'Notice period pay', calculationMethod: `Salary basis: ${salaryLabel(noticePeriodConfig.salaryBasis) || 'Not set'}` });
     } else if (policyType === 'vacation_pay') {
       const min = vacationPayConfig.vacationMinimum === 'all_accrued' ? 'All Accrued' :
         vacationPayConfig.vacationMinimum === 'less_than_all' ? `Less than all accrued (${vacationPayConfig.vacationFixedDays ?? '?'} days)` : 'Not set';
       const capSuffix = vacationPayConfig.maxCapDays ? `; Max cap: ${vacationPayConfig.maxCapDays} days` : '';
-      components.push({ name: 'Vacation Pay', calculationMethod: `${min}${capSuffix}; Salary basis: ${salaryLabel(vacationPayConfig.salaryBasis) || 'Not set'}` });
+      components.push({ name: 'Vacation pay', calculationMethod: `${min}${capSuffix}; Salary basis: ${salaryLabel(vacationPayConfig.salaryBasis) || 'Not set'}` });
     } else {
       const formatSub = (label: string, sub: SeveranceSubComponent) => {
         const isRemaining = sub.method === 'remaining_days_on_contract';
@@ -1234,14 +1234,14 @@ export default function CreateTerminationPolicyView() {
     </div>
   );
 
-  /* ─── Step 1: Choose policy type ─── */
-  if (!policyType) {
+  /* ─── Step 1: Choose policy type (CREATE mode only) ─── */
+  if (!policyType && !isEditMode) {
     return (
       <div className="max-w-[600px] mx-auto px-8 py-8">
         {breadcrumb}
-        <h1 className="text-[22px] font-bold text-[#1a1a1a] mb-2">{isEditMode ? 'Edit' : 'Add'} Termination Liability Policy</h1>
+        <h1 className="text-[22px] font-bold text-[#1a1a1a] mb-2">Add termination liability policy</h1>
         <p className="text-[14px] text-[#6b7280] mb-8">
-          What type of policy do you want to {isEditMode ? 'switch to' : 'create'} for {countryName}?
+          What type of policy do you want to create for {countryName}?
         </p>
 
         <div className="flex flex-col gap-4">
@@ -1256,7 +1256,7 @@ export default function CreateTerminationPolicyView() {
                 </svg>
               </div>
               <div>
-                <h3 className="text-[16px] font-semibold text-[#1a1a1a] mb-1">Notice Period Pay</h3>
+                <h3 className="text-[16px] font-semibold text-[#1a1a1a] mb-1">Notice period pay</h3>
                 <p className="text-[13px] text-[#6b7280] leading-relaxed">
                   Define the salary basis used to calculate notice period pay.
                 </p>
@@ -1275,7 +1275,7 @@ export default function CreateTerminationPolicyView() {
                 </svg>
               </div>
               <div>
-                <h3 className="text-[16px] font-semibold text-[#1a1a1a] mb-1">Vacation Pay</h3>
+                <h3 className="text-[16px] font-semibold text-[#1a1a1a] mb-1">Vacation pay</h3>
                 <p className="text-[13px] text-[#6b7280] leading-relaxed">
                   Define the number of vacation days an employee is entitled to as a payout, along with the salary basis used.
                 </p>
@@ -1294,7 +1294,7 @@ export default function CreateTerminationPolicyView() {
                 </svg>
               </div>
               <div>
-                <h3 className="text-[16px] font-semibold text-[#1a1a1a] mb-1">Severance Pay</h3>
+                <h3 className="text-[16px] font-semibold text-[#1a1a1a] mb-1">Severance pay</h3>
                 <p className="text-[13px] text-[#6b7280] leading-relaxed">
                   Define the severance components an employee is entitled to, along with the salary basis used. These components include gratuity, redundancy pay, and severance offered during MTA.
                 </p>
@@ -1313,8 +1313,8 @@ export default function CreateTerminationPolicyView() {
   }
 
   /* ─── Step 2: Configure the policy ─── */
-  const typeLabel = policyType === 'severance' ? 'Severance Pay' :
-    policyType === 'vacation_pay' ? 'Vacation Pay' : 'Notice Period Pay';
+  const typeLabel = policyType === 'severance' ? 'Severance pay' :
+    policyType === 'vacation_pay' ? 'Vacation pay' : 'Notice period pay';
 
   return (
     <div className="max-w-[800px] mx-auto px-8 py-8">
@@ -1332,7 +1332,7 @@ export default function CreateTerminationPolicyView() {
             </svg>
           </button>
         )}
-        <h1 className="text-[22px] font-bold text-[#1a1a1a]">{isEditMode ? 'Edit' : 'Add'} {typeLabel} Policy</h1>
+        <h1 className="text-[22px] font-bold text-[#1a1a1a]">{isEditMode ? 'Edit' : 'Add'} {typeLabel.toLowerCase()} policy</h1>
         <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#f2f0f7] text-[#4a284b] font-medium">{typeLabel}</span>
       </div>
       <p className="text-[14px] text-[#6b7280] mb-8 ml-10">
@@ -1349,9 +1349,9 @@ export default function CreateTerminationPolicyView() {
             value={policyName}
             onChange={setPolicyName}
             placeholder={
-              policyType === 'severance' ? 'e.g. Severance Pay: Fixed Term' :
-              policyType === 'vacation_pay' ? 'e.g. Vacation Pay: Standard' :
-              'e.g. Notice Period Pay: Standard'
+              policyType === 'severance' ? 'e.g. Severance pay: Fixed Term' :
+              policyType === 'vacation_pay' ? 'e.g. Vacation pay: Standard' :
+              'e.g. Notice period pay: Standard'
             }
           />
         </section>
