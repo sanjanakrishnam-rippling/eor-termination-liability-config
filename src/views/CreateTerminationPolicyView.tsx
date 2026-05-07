@@ -773,7 +773,7 @@ function SeveranceSubSection({
                   placeholder="e.g. 30"
                 />
                 <Select
-                  label="Does employee continue to receive pay during this negotiation period?"
+                  label="Do they get paid during this period?"
                   value={sub.mtaContinuePay ?? ''}
                   options={MTA_CONTINUE_PAY_OPTIONS}
                   onChange={(v) => onUpdate({ mtaContinuePay: v })}
@@ -1304,7 +1304,7 @@ export default function CreateTerminationPolicyView() {
         </div>
 
         <div className="mt-8">
-          <Button appearance="secondary" size="md" onClick={() => navigate(`/countries/${code}`)}>
+          <Button appearance="secondary" size="md" onClick={() => navigate(`/countries/${code}`, { state: { tab: 6 } })}>
             Cancel
           </Button>
         </div>
@@ -1335,7 +1335,7 @@ export default function CreateTerminationPolicyView() {
         <h1 className="text-[22px] font-bold text-[#1a1a1a]">{isEditMode ? 'Edit' : 'Add'} {typeLabel.toLowerCase()} policy</h1>
         <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#f2f0f7] text-[#4a284b] font-medium">{typeLabel}</span>
       </div>
-      <p className="text-[14px] text-[#6b7280] mb-8 ml-10">
+      <p className={`text-[14px] text-[#6b7280] mb-8 ${!isEditMode ? 'ml-10' : ''}`}>
         Configure the {typeLabel.toLowerCase()} policy for {countryName}.
       </p>
 
@@ -1429,7 +1429,7 @@ export default function CreateTerminationPolicyView() {
 
         {/* Actions */}
         <div className="flex items-center justify-between pt-2 pb-8">
-          <Button appearance="secondary" size="md" onClick={() => navigate(`/countries/${code}`)}>
+          <Button appearance="secondary" size="md" onClick={() => navigate(`/countries/${code}`, { state: { tab: 6 } })}>
             Cancel
           </Button>
           <Button appearance="primary" size="lg" onClick={handleSave} disabled={!policyName.trim()}>
